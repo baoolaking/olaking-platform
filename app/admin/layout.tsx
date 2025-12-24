@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { AdminShell } from "@/components/admin/AdminShell";
 
-export default async function DashboardLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -18,16 +18,24 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // Fetch user role for sidebar
+  // Fetch user role and verify admin access
   const { data: userData } = await supabase
     .from("users")
-    .select("role, full_name")
+    .select("role, full_name, username")
     .eq("id", user.id)
     .single();
 
+  // Redirect non-admins to user dashboard
+  if (
+    !userData ||
+    (userData.role !== "super_admin" && userData.role !== "sub_admin")
+  ) {
+    redirect("/dashboard");
+  }
+
   return (
-    <DashboardShell userRole={userData?.role} fullName={userData?.full_name}>
+    <AdminShell userRole={userData.role} userName={userData.full_name}>
       {children}
-    </DashboardShell>
+    </AdminShell>
   );
 }

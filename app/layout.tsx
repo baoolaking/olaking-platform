@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   title: "BAO OLAKING GLOBAL ENTERPRISES - Social Media Boosting Platform",
   description:
     "Professional social media boosting services for TikTok, Instagram, Facebook, YouTube, X, and more. Grow your online presence with safe and efficient services.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
