@@ -1,0 +1,144 @@
+﻿Product Requirements Document (PRD)
+TikTok Boosting Platform
+BAO OLAKING GLOBAL ENTERPRISES
+
+
+-----1. Product Overview
+The TikTok Boosting Platform by BAO OLAKING GLOBAL ENTERPRISES is a web-based service designed to help creators, influencers, and businesses grow their TikTok presence through safe and efficient boosting services such as followers, likes, views, shares, and engagement.
+-----2. Objectives
+1. Provide social media boosting services (likes, followers, views,shares etc.)
+2. Enable users to buy UK account
+3. Opening of PayPal account
+4. Enable users to buy TikTok coins
+5. Selling of number USA, UK, etc.
+-----3. Core Services
+1. TikTok
+2. Instagram
+3. Facebook
+4. YouTube
+5. X
+6. Telegram
+7. ETC
+-----4. Key Features
+* User registration and login (username will be in the field)
+* For login (username or whatsapp no and password)
+* Real-time order status tracking
+* Secure payment processing
+* User dashboard (profile management(don’t do profile image upload, we don’t have any media storage and there will be a tab page for user to update their bank account incase of refund), orders, history)
+* Admin panel for managing service-pricing,users and orders
+Admin will have 2 roles, super and sub admin (Sub admin will be able to manage orders only)
+Admin will be able to view users that make an order.
+* Customer support via WhatsApp/Email
+-----5. Functional Requirements
+   * Users can select a TikTok service and quantity
+   * Automatic order processing with gradual delivery
+   * Manual review for special or high-volume orders
+   * Admin can manage users, services
+   *  Order notifications sent to users after completion (The **Resend** mail service will be integrated and triggered via **Supabase** to alert admin and users on new order creation and completion. The admin will also be alerted when an order is made.)
+-----6. Non-Functional Requirements
+   *   - Mobile-first, responsive design
+   *   - Page load time under 3 seconds
+   *   - 99% platform uptime
+   *   - Secure data handling (SSL encryption)    
+   *   - Scalable system for high traffic and orders
+   *   - **Technology Stack:** Frontend (Next.js), Backend (Supabase), Mail Service (Resend)
+   *   - **Design & User Experience:**
+   *       - **Primary Color:** #49F656
+   *       - **Font Family:** A modern, highly legible sans-serif font like **"Inter"** or **"Roboto"** is recommended for its readability across various devices.
+   *       - **The platform must factor in a Light and Dark Mode toggle for optimal user experience.
+   * -----7. Payments & Billing
+   * Support for local
+   * Automatic order confirmation after payment
+   * Clear refund or replacement policy for failed orders
+-----8. Compliance & Safety
+   * Gradual delivery to reduce TikTok account risk
+   * Clear disclaimer on boosting limits and policies
+-----9. Success Metrics (KPIs)
+   * Number of completed TikTok orders
+   * Average order delivery time
+   * Customer repeat rate
+   * User satisfaction and feedback
+-----Objectives & Payment Flow UpdatesObjective Handling Logic
+
+
+The platform provides five (5) distinct objectives for users to choose from. Only the objective related to social media boosting services is handled fully within the platform.Social Media Boosting Objective
+
+
+When a user selects “Provide social media boosting services (likes, followers, views, etc.)”, the system will display a list of available boosting plans.
+
+
+Each plan will include:
+   * Service type (likes, followers, views, etc.)
+   * Target social media platform
+   * Quantity or scope
+   * Price
+   * Additional delivery notes (if any)
+All plans, pricing, and availability are fully managed by the admin through the admin dashboard. Users must select a plan before proceeding to payment.Manual Payment Flow
+
+
+Payments on the platform are manual and not automated. No Paystack, card payments, or automated bank transfers are used.
+   1. After selecting a plan, the user will select a bank account from a list provided by the admin.
+   2. The user will transfer the required amount externally using their banking app or USSD.
+   3. After payment, the user is redirected to a 'Waiting for Payment Confirmation' screen.
+   4. The system polls the backend every 1 minute to check if the admin has approved the transaction.
+   5. Admins manually verify payments and approve or reject transactions.
+   6. Once approved, the user proceeds to service fulfillment. If rejected, the user is notified and prompted to retry payment.
+Other Objectives
+
+
+When users select any objective other than social media boosting, they are redirected to WhatsApp to continue the conversation manually.
+   * WhatsApp Contact: +234 901 799 2518, +234 916 331 3727.
+   * This allows for custom discussions, pricing, and requirement gathering outside the platform.
+
+
+
+
+Admin and User Feature DetailsAdmin Features
+   * Wallet Funding Minimum: Admin will be able to modify the minimum price a user must input to fund their account.
+   * Service and Pricing Management (CRUD): Admin can manage (Create, Read, Update, Delete) the list of social media platforms and the price of each service for that platform.
+   * Pricing: Admin can manage service prices per 1,000 units (e.g., 2000 NGN per 1k likes, 1500 NGN per 1k followers).
+   * Social Media Enums: The system will pre-load social media and service enums. The admin will choose and activate/create them for display to users.
+   * Social Media Enum: [tiktok, instagram, facebook, youtube, x, whatsapp, telegram]
+   * Instagram Enums: [followers, post_likes, video_reel_views, custom_comments, story_views]
+   * YouTube Enums: [subscribers, likes, video_views, custom_comments]
+   * X Enums: [followers, comments, likes, repost]
+   * Telegram Enums: [group_channel_members, post_views_last_20_days, post_views_specific, reaction_specific, reaction_last_20_days]
+   * TikTok Enums: [followers, video_likes, video_views, video_shares, custom_comments, video_saves]
+   * Facebook Enums: [followers, page_likes, video_reel_views, post_shares, post_likes]
+   * Order Status Updates: Admin will manually update the status of an order.
+   * Order Status Enums: awaiting_payment, pending, completed, failed, awaiting_refund, refunded (additional important status enums can be added).
+Based on the document scan, the specific feature for the admin to perform CRUD operations on bank accounts (account name and number) and manage their active/inactive status is not explicitly listed under the "Admin Features" section.
+
+
+You should insert the new requirement as a new bullet point within the Admin Features list, which is part of the "Admin and User Feature Details" section on Tab 3.Suggested Insertion Location and Text
+
+
+The best place to insert this is after Service and Pricing Management (CRUD).
+
+
+Original Admin Features List:
+   * Wallet Funding Minimum: Admin will be able to modify the minimum price a user must input to fund their account.
+   * Service and Pricing Management (CRUD): Admin can manage (Create, Read, Update, Delete) the list of social media platforms and the price of each service for that platform.
+   * Pricing: Admin can manage service prices per 1,000 units (e.g., 2000 NGN per 1k likes, 1500 NGN per 1k followers).
+   * Social Media Enums: The system will pre-load social media and service enums...
+   * Order Status Updates: Admin will manually update the status of an order.
+   * Bank Account Management (CRUD): Admin can manage (Create, Read, Update, Delete) the list of bank accounts (account name and number) presented to users for manual payment.
+   * Admin will also be able to set the status of each bank account as active or inactive for user display.
+   * User Features
+   * Wallet Funding & Purchase Flow:
+   * Users can fund their wallet.
+   * When purchasing a service:
+   * If the wallet balance is 0 NGN, the user is presented with the option to choose a bank account for a one-off payment.
+   * If the wallet balance is greater than 0 NGN, the cost will be deducted from their wallet balance.
+   * Service Selection Form:
+   * Upon clicking a service, the user will be prompted to select an active social media platform, which then brings up a form.
+   * The available social media and services are fetched from the server based on what the admin has created and made active.
+   * Form Fields (per social media/service):
+   * Type: Enum for quality (high_quality, low_quality).
+   * Link: Dynamic based on the service (e.g., video link, profile link).
+   * Quantity: Minimum 100, Maximum 500,000.
+   * Price (in NGN): Read-only, auto-calculated based on the quantity entered.
+   * Order Submission:
+   * The system will validate all fields and prices before submission.
+   * The price is deducted from the wallet balance; if insufficient, the user is given an option to top up their wallet or make a one-off payment.
+   * The order is submitted after a successful payment flow, and the status is set to "pending".
