@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 export default async function AdminLayout({
@@ -8,6 +9,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
 
   const {
     data: { user },
@@ -18,8 +20,8 @@ export default async function AdminLayout({
     redirect("/login");
   }
 
-  // Fetch user role and verify admin access
-  const { data: userData } = await supabase
+  // Fetch user role using admin client to bypass RLS
+  const { data: userData } = await adminClient
     .from("users")
     .select("role, full_name, username")
     .eq("id", user.id)

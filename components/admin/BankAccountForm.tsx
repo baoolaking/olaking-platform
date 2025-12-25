@@ -115,6 +115,12 @@ export function BankAccountForm({ account, onSuccess }: BankAccountFormProps) {
               placeholder="e.g., 1234567890"
               required
               defaultValue={account?.account_number || ""}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              onInput={(e) => {
+                const target = e.target as HTMLInputElement;
+                target.value = target.value.replace(/[^0-9]/g, '');
+              }}
             />
           </div>
           <div className="flex items-center space-x-2">

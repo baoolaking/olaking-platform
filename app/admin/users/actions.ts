@@ -3,9 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { logAdminAction, extractAuditFields } from "@/lib/audit/logAdminAction";
 
 export async function createUser(formData: FormData) {
   const adminClient = createAdminClient();
+  const supabase = await createClient();
+
+  // Get current user's role for permission check
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  if (!authUser) {
+    throw new Error("Not authenticated");
+  }
+
+  const { data: currentUserData } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", authUser.id)
+    .single();
+
+  if (!currentUserData) {
+    throw new Error("Unable to verify user permissions");
+  }
 
   const email = formData.get("email") as string;
   const username = formData.get("username") as string;
@@ -20,6 +41,12 @@ export async function createUser(formData: FormData) {
 
   if (!email || !username || !whatsapp_no || !full_name || !password || !role) {
     throw new Error("All required fields must be filled");
+  }
+
+  // Sub admins can only create regular users
+  if (currentUserData.role === "sub_admin" && 
+      (role === "sub_admin" || role === "super_admin")) {
+    throw new Error("You don't have permission to create admin accounts");
   }
 
   // Create user with Supabase Admin API (doesn't create a session)
@@ -43,22 +70,24 @@ export async function createUser(formData: FormData) {
     throw new Error("Failed to create user");
   }
 
+  const newUserData = {
+    id: authData.user.id,
+    email,
+    username,
+    whatsapp_no,
+    full_name,
+    role,
+    is_active,
+    bank_account_name: bank_account_name || null,
+    bank_account_number: bank_account_number || null,
+    bank_name: bank_name || null,
+    wallet_balance: 0,
+  };
+
   // Insert into public users table (trigger may not fire with admin.createUser)
   const { error: insertError } = await adminClient
     .from("users")
-    .insert({
-      id: authData.user.id,
-      email,
-      username,
-      whatsapp_no,
-      full_name,
-      role,
-      is_active,
-      bank_account_name: bank_account_name || null,
-      bank_account_number: bank_account_number || null,
-      bank_name: bank_name || null,
-      wallet_balance: 0,
-    });
+    .insert(newUserData);
 
   if (insertError) {
     console.error("Error inserting user data:", insertError);
@@ -81,11 +110,30 @@ export async function createUser(formData: FormData) {
     }
   }
 
+  // Log the admin action
+  await logAdminAction({
+    action: "CREATE_USER",
+    entityType: "user",
+    entityId: authData.user.id,
+    newValues: await extractAuditFields(newUserData, [
+      "email",
+      "username",
+      "whatsapp_no",
+      "full_name",
+      "role",
+      "is_active",
+      "bank_account_name",
+      "bank_account_number",
+      "bank_name"
+    ]),
+  });
+
   revalidatePath("/admin/users");
 }
 
 export async function updateUser(id: string, formData: FormData) {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
 
   const {
     data: { user: authUser },
@@ -97,6 +145,34 @@ export async function updateUser(id: string, formData: FormData) {
 
   if (authUser.id === id) {
     throw new Error("You cannot edit your own account.");
+  }
+
+  // Get current user's role using admin client to bypass RLS
+  const { data: currentUserData } = await adminClient
+    .from("users")
+    .select("role")
+    .eq("id", authUser.id)
+    .single();
+
+  if (!currentUserData) {
+    throw new Error("Unable to verify user permissions");
+  }
+
+  // Get target user's data using admin client (for old values and role check)
+  const { data: targetUserData } = await adminClient
+    .from("users")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (!targetUserData) {
+    throw new Error("Target user not found");
+  }
+
+  // Sub admins can only edit regular users
+  if (currentUserData.role === "sub_admin" && 
+      (targetUserData.role === "sub_admin" || targetUserData.role === "super_admin")) {
+    throw new Error("You don't have permission to edit admin accounts");
   }
 
   const email = formData.get("email") as string;
@@ -116,6 +192,12 @@ export async function updateUser(id: string, formData: FormData) {
     throw new Error("All required fields must be filled");
   }
 
+  // Sub admins cannot assign admin roles
+  if (currentUserData.role === "sub_admin" && 
+      (role === "sub_admin" || role === "super_admin")) {
+    throw new Error("You don't have permission to assign admin roles");
+  }
+
   const updateData: Record<string, unknown> = {
     email,
     username,
@@ -133,7 +215,8 @@ export async function updateUser(id: string, formData: FormData) {
     updateData.wallet_balance = wallet_balance;
   }
 
-  const { error } = await supabase
+  // Use admin client for the update to bypass RLS
+  const { error } = await adminClient
     .from("users")
     .update(updateData)
     .eq("id", id);
@@ -143,11 +226,34 @@ export async function updateUser(id: string, formData: FormData) {
     throw new Error(error.message);
   }
 
+  // Log the admin action
+  const auditFields = [
+    "email",
+    "username", 
+    "whatsapp_no",
+    "full_name",
+    "role",
+    "is_active",
+    "bank_account_name",
+    "bank_account_number",
+    "bank_name",
+    "wallet_balance"
+  ];
+
+  await logAdminAction({
+    action: "UPDATE_USER",
+    entityType: "user",
+    entityId: id,
+    oldValues: await extractAuditFields(targetUserData, auditFields),
+    newValues: await extractAuditFields(updateData, auditFields),
+  });
+
   revalidatePath("/admin/users");
 }
 
 export async function deactivateUser(id: string) {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
 
   const {
     data: { user: authUser },
@@ -161,7 +267,36 @@ export async function deactivateUser(id: string) {
     throw new Error("You cannot deactivate your own account.");
   }
 
-  const { error } = await supabase
+  // Get current user's role using admin client
+  const { data: currentUserData } = await adminClient
+    .from("users")
+    .select("role")
+    .eq("id", authUser.id)
+    .single();
+
+  if (!currentUserData) {
+    throw new Error("Unable to verify user permissions");
+  }
+
+  // Get target user's data using admin client
+  const { data: targetUserData } = await adminClient
+    .from("users")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (!targetUserData) {
+    throw new Error("Target user not found");
+  }
+
+  // Sub admins cannot deactivate admin accounts
+  if (currentUserData.role === "sub_admin" && 
+      (targetUserData.role === "sub_admin" || targetUserData.role === "super_admin")) {
+    throw new Error("You don't have permission to deactivate admin accounts");
+  }
+
+  // Use admin client for the update
+  const { error } = await adminClient
     .from("users")
     .update({
       is_active: false,
@@ -173,6 +308,21 @@ export async function deactivateUser(id: string) {
     console.error("Error deactivating user:", error);
     throw new Error(error.message);
   }
+
+  // Log the admin action
+  await logAdminAction({
+    action: "DEACTIVATE_USER",
+    entityType: "user",
+    entityId: id,
+    oldValues: {
+      is_active: targetUserData.is_active,
+      username: targetUserData.username,
+      full_name: targetUserData.full_name,
+    },
+    newValues: {
+      is_active: false,
+    },
+  });
 
   revalidatePath("/admin/users");
 }

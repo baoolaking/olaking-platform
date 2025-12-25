@@ -20,11 +20,13 @@ type ExtendedUser = User & {
 interface UsersTableClientProps {
   users: ExtendedUser[];
   currentUserId?: string;
+  currentUserRole?: string;
 }
 
 export function UsersTableClient({
   users,
   currentUserId,
+  currentUserRole,
 }: UsersTableClientProps) {
   return (
     <ResponsiveTable
@@ -54,11 +56,30 @@ export function UsersTableClient({
             if (currentUserId && row.id === currentUserId) {
               return <span className="text-muted-foreground">—</span>;
             }
+
+            // Check if current user can manage this user
+            const canEdit = currentUserRole === "super_admin" ||
+              (currentUserRole === "sub_admin" && row.role === "user");
+
+            // Sub admins cannot deactivate admin accounts
+            const canDeactivate = currentUserRole === "super_admin" ||
+              (currentUserRole === "sub_admin" && row.role === "user");
+
             return (
               <div className="flex gap-2">
-                <UserForm user={row} />
-                {row.is_active && (
-                  <DeactivateUserButton id={row.id} userName={row.full_name} />
+                {canEdit && (
+                  <UserForm user={row} currentUserRole={currentUserRole} />
+                )}
+                {row.is_active && canDeactivate && (
+                  <DeactivateUserButton
+                    id={row.id}
+                    userName={row.full_name}
+                    currentUserRole={currentUserRole}
+                    targetUserRole={row.role}
+                  />
+                )}
+                {!canEdit && !canDeactivate && (
+                  <span className="text-muted-foreground text-sm">No actions</span>
                 )}
               </div>
             );

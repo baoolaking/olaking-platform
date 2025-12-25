@@ -29,31 +29,37 @@ const navigation = [
     name: "Dashboard",
     href: "/admin",
     icon: LayoutDashboard,
+    roles: ["super_admin", "sub_admin"], // Both roles can access
   },
   {
     name: "Users",
     href: "/admin/users",
     icon: Users,
+    roles: ["super_admin", "sub_admin"], // Both roles can access
   },
   {
     name: "Orders",
     href: "/admin/orders",
     icon: ShoppingBag,
+    roles: ["super_admin", "sub_admin"], // Both roles can access
   },
   {
     name: "Services",
     href: "/admin/services",
     icon: Shield,
+    roles: ["super_admin"], // Only super admin
   },
   {
     name: "Bank Accounts",
     href: "/admin/bank-accounts",
     icon: CreditCard,
+    roles: ["super_admin"], // Only super admin
   },
   {
     name: "Settings",
     href: "/admin/settings",
     icon: Settings,
+    roles: ["super_admin"], // Only super admin
   },
 ];
 
@@ -71,6 +77,11 @@ export function AdminSidebar({
   const open = isMobileMenuOpen ?? internalMobileOpen;
   const setOpen = onToggleMobile ?? setInternalMobileOpen;
   const closeMobileMenu = onCloseMobile ?? (() => setInternalMobileOpen(false));
+
+  // Filter navigation items based on user role
+  const filteredNavigation = navigation.filter(item =>
+    item.roles.includes(userRole)
+  );
 
   return (
     <>
@@ -102,7 +113,7 @@ export function AdminSidebar({
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const isActive =
                 pathname === item.href ||
                 (item.href !== "/admin" && pathname.startsWith(item.href));

@@ -19,16 +19,27 @@ import { deactivateUser } from "@/app/admin/users/actions";
 interface DeactivateUserButtonProps {
   id: string;
   userName: string;
+  currentUserRole?: string;
+  targetUserRole?: string;
 }
 
 export function DeactivateUserButton({
   id,
   userName,
+  currentUserRole,
+  targetUserRole,
 }: DeactivateUserButtonProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const handleDeactivate = () => {
+    // Additional check: Sub admins cannot deactivate admin accounts
+    if (currentUserRole === "sub_admin" &&
+      (targetUserRole === "sub_admin" || targetUserRole === "super_admin")) {
+      alert("You don't have permission to deactivate admin accounts.");
+      return;
+    }
+
     startTransition(async () => {
       try {
         await deactivateUser(id);

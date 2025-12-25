@@ -87,40 +87,23 @@ export function useAdminOrders() {
     adminNotes: string
   ) => {
     try {
-      const updateData: any = {
-        status: newStatus,
-        admin_notes: adminNotes || null,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Set timestamps based on status
-      const currentOrder = orders.find(o => o.id === orderId);
-      if (newStatus === "completed" && currentOrder?.status !== "completed") {
-        updateData.completed_at = new Date().toISOString();
+      // Import the server action dynamically
+      const { updateOrderStatus: serverUpdateOrderStatus } = await import("@/app/admin/orders/actions");
+      
+      const result = await serverUpdateOrderStatus(orderId, newStatus, adminNotes);
+      
+      if (result.success) {
+        // Refresh orders to get updated data
+        await fetchOrders();
+        toast.success("Order status updated successfully");
+        return true;
+      } else {
+        toast.error("Failed to update order status");
+        return false;
       }
-      if (newStatus === "pending" && currentOrder?.payment_method === "bank_transfer") {
-        updateData.payment_verified_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from("orders")
-        .update(updateData)
-        .eq("id", orderId);
-
-      if (error) throw error;
-
-      // Update local state
-      setOrders(orders.map(order =>
-        order.id === orderId
-          ? { ...order, ...updateData }
-          : order
-      ));
-
-      toast.success("Order status updated successfully");
-      return true;
     } catch (error) {
       console.error("Error updating order:", error);
-      toast.error("Failed to update order status");
+      toast.error(error instanceof Error ? error.message : "Failed to update order status");
       return false;
     }
   };
@@ -132,69 +115,21 @@ export function useAdminOrders() {
     action: "add" | "subtract"
   ) => {
     try {
-      // Get current admin user
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-      // Get current wallet balance from users table
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("wallet_balance")
-        .eq("id", userId)
-        .single();
-
-      if (userError) {
-        console.error("Error fetching user wallet:", userError);
-        toast.error("Failed to fetch wallet balance");
+      // Import the server action dynamically
+      const { updateUserWallet: serverUpdateWallet } = await import("@/app/admin/wallet/actions");
+      
+      const result = await serverUpdateWallet(userId, orderId, amount, action);
+      
+      if (result.success) {
+        toast.success(result.message);
+        return true;
+      } else {
+        toast.error("Failed to update wallet balance");
         return false;
       }
-
-      const currentBalance = userData.wallet_balance;
-      const newBalance = action === "add"
-        ? currentBalance + amount
-        : currentBalance - amount;
-
-      if (newBalance < 0) {
-        toast.error("Insufficient wallet balance for subtraction");
-        return false;
-      }
-
-      // Update wallet balance in users table
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({
-          wallet_balance: newBalance,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", userId);
-
-      if (updateError) throw updateError;
-
-      // Create wallet transaction record
-      const { error: transactionError } = await supabase
-        .from("wallet_transactions")
-        .insert({
-          user_id: userId,
-          transaction_type: action === "add" ? "credit" : "debit",
-          amount: amount,
-          balance_before: currentBalance,
-          balance_after: newBalance,
-          description: `Admin ${action === "add" ? "credit" : "debit"} - Order ${orderId.slice(0, 8)}`,
-          reference: `admin_${action}_${orderId}`,
-          order_id: orderId,
-          created_by: currentUser?.id || null,
-          created_at: new Date().toISOString()
-        });
-
-      if (transactionError) {
-        console.error("Error creating transaction:", transactionError);
-        toast.error("Failed to log transaction, but wallet was updated");
-      }
-
-      toast.success(`Wallet ${action === "add" ? "credited" : "debited"} successfully`);
-      return true;
     } catch (error) {
       console.error("Error updating wallet:", error);
-      toast.error("Failed to update wallet balance");
+      toast.error(error instanceof Error ? error.message : "Failed to update wallet balance");
       return false;
     }
   };

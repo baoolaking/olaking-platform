@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   Card,
   CardContent,
@@ -26,6 +27,7 @@ export default async function AdminUsersPage({
   }>;
 }) {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
 
   const {
     data: { user },
@@ -35,6 +37,15 @@ export default async function AdminUsersPage({
   if (authError || !user) {
     redirect("/login");
   }
+
+  // Get current user role using admin client
+  const { data: currentUserData } = await adminClient
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const currentUserRole = currentUserData?.role || "user";
 
   // Unwrap searchParams (Next.js dynamic API)
   const sp = await searchParams;
@@ -46,13 +57,13 @@ export default async function AdminUsersPage({
   const roleFilter = sp?.role ?? "all";
   const statusFilter = sp?.status ?? "all";
 
-  let query = supabase
+  let query = adminClient
     .from("users")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false });
 
-  if (roleFilter !== "all") {
-    query = query.eq("role", roleFilter);
+  if (roleFilter !== "all" && (roleFilter === "user" || roleFilter === "sub_admin" || roleFilter === "super_admin")) {
+    query = query.eq("role", roleFilter as "user" | "sub_admin" | "super_admin");
   }
   if (statusFilter !== "all") {
     query = query.eq("is_active", statusFilter === "active");
@@ -74,9 +85,9 @@ export default async function AdminUsersPage({
     console.error("Error fetching users:", usersError);
   }
 
-  // Get order counts for each user
+  // Get order counts for each user using admin client
   const userIds = users?.map((u) => u.id) || [];
-  const { data: orderCounts } = await supabase
+  const { data: orderCounts } = await adminClient
     .from("orders")
     .select("user_id")
     .in("user_id", userIds);
@@ -103,7 +114,7 @@ export default async function AdminUsersPage({
       displayWallet: `₦${user.wallet_balance.toLocaleString()}`,
       displayOrders: orderCountMap?.[user.id] || 0,
       displayStatus: user.is_active ? "Active" : "Inactive",
-      displayJoined: format(new Date(user.created_at), "do MMM. yyyy"),
+      displayJoined: user.created_at ? format(new Date(user.created_at), "do MMM. yyyy") : "N/A",
       roleColor: roleColors[user.role],
     })) || [];
 
@@ -131,10 +142,12 @@ export default async function AdminUsersPage({
             Manage all platform users and their accounts
           </p>
         </div>
-        {/* Quick add button */}
-        <div className="hidden md:block">
-          <UserForm />
-        </div>
+        {/* Quick add button - Super Admin Only */}
+        {currentUserRole === "super_admin" && (
+          <div className="hidden md:block">
+            <UserForm currentUserRole={currentUserRole} />
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -189,9 +202,11 @@ export default async function AdminUsersPage({
                 View and manage user accounts and permissions
               </CardDescription>
             </div>
-            <div className="md:hidden">
-              <UserForm />
-            </div>
+            {currentUserRole === "super_admin" && (
+              <div className="md:hidden">
+                <UserForm currentUserRole={currentUserRole} />
+              </div>
+            )}
           </div>
           {/* Filters */}
           <UsersFilters q={q} role={roleFilter} status={statusFilter} />
@@ -200,7 +215,11 @@ export default async function AdminUsersPage({
           {!users || users.length === 0 ? (
             <p className="text-sm text-muted-foreground">No users found</p>
           ) : (
-            <UsersTableClient users={formattedUsers} currentUserId={user.id} />
+            <UsersTableClient
+              users={formattedUsers}
+              currentUserId={user.id}
+              currentUserRole={currentUserRole}
+            />
           )}
           {/* Pagination */}
           <div className="flex items-center justify-between mt-4">
@@ -210,18 +229,16 @@ export default async function AdminUsersPage({
             <div className="flex gap-2">
               <Link
                 aria-disabled={!hasPrev}
-                className={`px-3 py-2 border rounded-md ${
-                  hasPrev ? "" : "pointer-events-none opacity-50"
-                }`}
+                className={`px-3 py-2 border rounded-md ${hasPrev ? "" : "pointer-events-none opacity-50"
+                  }`}
                 href={hasPrev ? buildHref(page - 1) : "#"}
               >
                 Previous
               </Link>
               <Link
                 aria-disabled={!hasNext}
-                className={`px-3 py-2 border rounded-md ${
-                  hasNext ? "" : "pointer-events-none opacity-50"
-                }`}
+                className={`px-3 py-2 border rounded-md ${hasNext ? "" : "pointer-events-none opacity-50"
+                  }`}
                 href={hasNext ? buildHref(page + 1) : "#"}
               >
                 Next

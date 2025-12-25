@@ -30,9 +30,10 @@ type User = Tables<"users">;
 interface UserFormProps {
   user?: User;
   onSuccess?: () => void;
+  currentUserRole?: string;
 }
 
-export function UserForm({ user, onSuccess }: UserFormProps) {
+export function UserForm({ user, onSuccess, currentUserRole }: UserFormProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [selectedRole, setSelectedRole] = useState<string>(
@@ -41,6 +42,8 @@ export function UserForm({ user, onSuccess }: UserFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const isEdit = !!user;
+  const isSuperAdmin = currentUserRole === "super_admin";
+  const isSubAdmin = currentUserRole === "sub_admin";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -166,8 +169,13 @@ export function UserForm({ user, onSuccess }: UserFormProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="user">User</SelectItem>
-                <SelectItem value="sub_admin">Sub Admin</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
+                {/* Sub admins can only create/edit regular users */}
+                {isSuperAdmin && (
+                  <>
+                    <SelectItem value="sub_admin">Sub Admin</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>

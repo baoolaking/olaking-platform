@@ -66,12 +66,12 @@ export default function AdminSettingsPage() {
       const { data: settingsData, error: settingsError } = await supabase
         .from("admin_settings")
         .select("*")
-        .single();
+        .limit(1);
 
       if (settingsError) {
         console.error("Error fetching settings:", settingsError);
       } else {
-        setSettings(settingsData);
+        setSettings(settingsData?.[0] || null);
       }
 
       // Fetch audit logs

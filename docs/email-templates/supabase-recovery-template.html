@@ -1,0 +1,14 @@
+<h2>Reset Password</h2>
+
+<p>Hello there! 👋</p>
+
+<p>We received a request to reset the password for your account. If you made this request, click the button below to create a new password. If you didn't request this, you can safely ignore this email.</p>
+
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">Reset My Password</a></p>
+
+<p><strong>🛡️ Security Notice:</strong> This link will expire in 24 hours for your security. If you need a new reset link, please request another password reset from the login page.</p>
+
+<p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password</a></p>
+
+<p>This email was sent from {{ .SiteURL }}</p>
