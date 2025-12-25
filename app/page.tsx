@@ -10,14 +10,16 @@ import { Footer } from "@/components/sections/Footer";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-linear-to-b from-background via-background to-primary/5">
+    <>
       <Navigation />
-      <HeroSection />
-      <PlatformsSection />
-      <ObjectivesSection />
-      <FeaturesSection />
-      <CtaSection />
-      <Footer />
-    </div>
+      <div className="min-h-screen overflow-x-hidden bg-linear-to-b from-background via-background to-primary/5">
+        <HeroSection />
+        <PlatformsSection />
+        <ObjectivesSection />
+        <FeaturesSection />
+        <CtaSection />
+        <Footer />
+      </div>
+    </>
   );
 }

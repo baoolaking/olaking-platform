@@ -7,8 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ResponsiveTable } from "@/components/ui/responsive-table";
+import { BankAccountForm } from "@/components/admin/BankAccountForm";
+import { BankAccountsTableClient } from "@/components/admin/BankAccountsTableClient";
 
 export default async function AdminBankAccountsPage() {
   const supabase = await createClient();
@@ -83,11 +83,14 @@ export default async function AdminBankAccountsPage() {
 
       {/* Bank Accounts Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>All Bank Accounts</CardTitle>
-          <CardDescription>
-            Payment accounts for receiving customer deposits
-          </CardDescription>
+        <CardHeader className="flex flex-col md:flex-row md:items-center justify-between">
+          <div>
+            <CardTitle>All Bank Accounts</CardTitle>
+            <CardDescription>
+              Payment accounts for receiving customer deposits
+            </CardDescription>
+          </div>
+          <BankAccountForm />
         </CardHeader>
         <CardContent>
           {!bankAccounts || bankAccounts.length === 0 ? (
@@ -100,30 +103,7 @@ export default async function AdminBankAccountsPage() {
               </p>
             </div>
           ) : (
-            <ResponsiveTable
-              columns={[
-                { key: "bank_name", label: "Bank Name" },
-                { key: "account_name", label: "Account Name" },
-                { key: "account_number", label: "Account Number" },
-                {
-                  key: "is_active",
-                  label: "Status",
-                  render: (isActive) => (
-                    <Badge variant={isActive ? "default" : "secondary"}>
-                      {isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  ),
-                },
-                {
-                  key: "created_at",
-                  label: "Added",
-                  render: (date) =>
-                    new Date(date as string | number).toLocaleDateString(),
-                },
-              ]}
-              data={bankAccounts}
-              keyField="id"
-            />
+            <BankAccountsTableClient accounts={bankAccounts} />
           )}
         </CardContent>
       </Card>

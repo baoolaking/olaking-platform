@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Menu, X, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -25,15 +26,15 @@ export function Navigation() {
           transition={{ delay: 0.2 }}
           className="flex items-center space-x-2"
         >
-          <div className="w-10 h-10 bg-linear-to-br from-primary to-primary/60 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              BAO OLAKING
-            </h1>
-            <p className="text-xs text-muted-foreground">Global Enterprises</p>
-          </div>
+          <Link href="/">
+            <Image
+              src="/images/header-logo.png"
+              alt="BAO OLAKING Logo"
+              width={120}
+              height={40}
+              className="h-10 w-auto"
+            />
+          </Link>
         </motion.div>
 
         {/* Desktop Navigation */}

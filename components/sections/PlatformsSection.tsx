@@ -5,12 +5,42 @@ import Image from "next/image";
 import { Card } from "@/components/ui/card";
 
 const platforms = [
-  { name: "TikTok", icon: "/images/platforms/tiktok.svg", count: "10K+" },
-  { name: "Instagram", icon: "/images/platforms/instagram.svg", count: "8K+" },
-  { name: "Facebook", icon: "/images/platforms/facebook.svg", count: "12K+" },
-  { name: "YouTube", icon: "/images/platforms/youtube.svg", count: "5K+" },
-  { name: "X (Twitter)", icon: "/images/platforms/x.svg", count: "7K+" },
-  { name: "Telegram", icon: "/images/platforms/telegram.svg", count: "3K+" },
+  {
+    name: "TikTok",
+    icon: "/images/platforms/tiktok.svg",
+    count: "10K+",
+    gradient: "from-black to-cyan-400",
+  },
+  {
+    name: "Instagram",
+    icon: "/images/platforms/instagram.svg",
+    count: "8K+",
+    gradient: "from-purple-500 via-pink-500 to-orange-400",
+  },
+  {
+    name: "Facebook",
+    icon: "/images/platforms/facebook.svg",
+    count: "12K+",
+    gradient: "from-blue-600 to-blue-400",
+  },
+  {
+    name: "YouTube",
+    icon: "/images/platforms/youtube.svg",
+    count: "5K+",
+    gradient: "from-red-600 to-red-400",
+  },
+  {
+    name: "X (Twitter)",
+    icon: "/images/platforms/x.svg",
+    count: "7K+",
+    gradient: "from-gray-900 to-gray-600",
+  },
+  {
+    name: "Telegram",
+    icon: "/images/platforms/telegram.svg",
+    count: "3K+",
+    gradient: "from-blue-500 to-cyan-400",
+  },
 ];
 
 const containerVariants = {
@@ -68,14 +98,18 @@ export function PlatformsSection() {
             className="relative group"
           >
             <Card className="p-6 text-center hover:border-primary/50 transition-all cursor-pointer bg-linear-to-br from-card to-card/50">
-              <Image
-                src={platform.icon}
-                alt={platform.name}
-                width={48}
-                height={48}
-                className="mx-auto mb-3 opacity-80 group-hover:opacity-100 transition-opacity"
-                priority={false}
-              />
+              <div
+                className={`bg-linear-to-br ${platform.gradient} p-3 rounded-lg w-fit mx-auto mb-3 opacity-80 group-hover:opacity-100 transition-opacity`}
+              >
+                <Image
+                  src={platform.icon}
+                  alt={platform.name}
+                  width={48}
+                  height={48}
+                  className="invert dark:invert-0"
+                  priority={false}
+                />
+              </div>
               <h4 className="font-semibold mb-1">{platform.name}</h4>
               <p className="text-xs text-primary">{platform.count} orders</p>
               <div className="absolute inset-0 bg-primary/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" />

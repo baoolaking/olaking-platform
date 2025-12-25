@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -9,11 +9,14 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-linear-to-br from-primary to-primary/60 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-bold">BAO OLAKING</span>
+            <div className="mb-4">
+              <Image
+                src="/images/header-logo.png"
+                alt="BAO OLAKING Logo"
+                width={100}
+                height={32}
+                className="h-8 w-auto"
+              />
             </div>
             <p className="text-sm text-muted-foreground">
               Professional social media boosting services trusted by thousands

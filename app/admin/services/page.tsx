@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -7,8 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ResponsiveTable } from "@/components/ui/responsive-table";
+import { ServicesTable } from "@/components/admin/ServicesTable";
+import { ServiceForm } from "@/components/admin/ServiceForm";
 
 export default async function AdminServicesPage() {
   const supabase = await createClient();
@@ -59,6 +60,41 @@ export default async function AdminServicesPage() {
     },
     {}
   );
+
+  const platformIconMap: Record<string, string> = {
+    tiktok: "/images/platforms/tiktok.svg",
+    instagram: "/images/platforms/instagram.svg",
+    facebook: "/images/platforms/facebook.svg",
+    youtube: "/images/platforms/youtube.svg",
+    x: "/images/platforms/x.svg",
+    twitter: "/images/platforms/x.svg",
+    telegram: "/images/platforms/telegram.svg",
+    whatsapp: "/images/platforms/whatsapp.svg",
+  };
+
+  const renderPlatformChip = (platformRaw: string) => {
+    const platform = platformRaw?.toLowerCase();
+    const icon = platformIconMap[platform];
+
+    return (
+      <div className="flex items-center gap-2">
+        {icon ? (
+          <Image
+            src={icon}
+            alt={`${platformRaw} icon`}
+            width={28}
+            height={28}
+            className="h-7 w-7 dark:invert"
+          />
+        ) : (
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
+            {platformRaw?.slice(0, 2) || "?"}
+          </span>
+        )}
+        <span className="font-medium capitalize">{platformRaw}</span>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -115,12 +151,12 @@ export default async function AdminServicesPage() {
       </div>
 
       {/* Platform Breakdown */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
         {Object.entries(platformGroups || {}).map(([platform, count]) => (
           <Card key={platform}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium capitalize">
-                {platform}
+              <CardTitle className="text-sm font-medium">
+                {renderPlatformChip(platform)}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -134,78 +170,22 @@ export default async function AdminServicesPage() {
 
       {/* Services Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>All Services</CardTitle>
-          <CardDescription>
-            Complete list of all available services
-          </CardDescription>
+        <CardHeader className="flex flex-col md:flex-row md:items-center justify-between">
+          <div>
+            <CardTitle>All Services</CardTitle>
+            <CardDescription>
+              Complete list of all available services
+            </CardDescription>
+          </div>
+          <ServiceForm existingServices={services || []} />
         </CardHeader>
         <CardContent>
           {!services || services.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No services found</p>
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground">No services found</p>
+            </div>
           ) : (
-            <ResponsiveTable
-              columns={[
-                {
-                  key: "platform",
-                  label: "Platform",
-                  render: (platform: any) => (
-                    <span className="font-medium capitalize">{platform}</span>
-                  ),
-                },
-                {
-                  key: "service_type",
-                  label: "Service Type",
-                  render: (type: any) => (
-                    <span className="capitalize">{type}</span>
-                  ),
-                },
-                {
-                  key: "description",
-                  label: "Description",
-                  render: (desc: any) => (
-                    <span className="text-sm text-muted-foreground">
-                      {desc || "—"}
-                    </span>
-                  ),
-                },
-                {
-                  key: "price_per_1k",
-                  label: "Price/1K",
-                  render: (price: any) => (
-                    <span className="font-medium">
-                      ₦{price.toLocaleString()}
-                    </span>
-                  ),
-                },
-                {
-                  key: "min_quantity",
-                  label: "Min",
-                  render: (qty: any) => qty.toLocaleString(),
-                },
-                {
-                  key: "max_quantity",
-                  label: "Max",
-                  render: (qty: any) => qty.toLocaleString(),
-                },
-                {
-                  key: "id",
-                  label: "Orders",
-                  render: (serviceId: any) => orderCountMap?.[serviceId] || 0,
-                },
-                {
-                  key: "is_active",
-                  label: "Status",
-                  render: (isActive: any) => (
-                    <Badge variant={isActive ? "default" : "secondary"}>
-                      {isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  ),
-                },
-              ]}
-              data={services}
-              keyField="id"
-            />
+            <ServicesTable services={services} />
           )}
         </CardContent>
       </Card>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -83,19 +84,20 @@ export function AdminSidebar({
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
           <div className="p-6 border-b border-border">
-            <Link href="/admin" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">
-                  O
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-lg">Olaking Admin</span>
-                <Badge variant="outline" className="w-fit text-xs">
-                  {isSuperAdmin ? "Super Admin" : "Sub Admin"}
-                </Badge>
-              </div>
-            </Link>
+            <div className="flex flex-col space-y-3">
+              <Link href="/admin">
+                <Image
+                  src="/images/header-logo.png"
+                  alt="BAO OLAKING Logo"
+                  width={100}
+                  height={32}
+                  className="h-8 w-auto"
+                />
+              </Link>
+              <Badge variant="outline" className="w-fit text-xs">
+                {isSuperAdmin ? "Super Admin" : "Sub Admin"}
+              </Badge>
+            </div>
           </div>
 
           {/* Navigation */}

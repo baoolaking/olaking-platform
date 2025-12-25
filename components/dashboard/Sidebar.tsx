@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, ShoppingBag, User, Wallet } from "lucide-react";
@@ -62,13 +63,14 @@ export function Sidebar({
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
           <div className="p-6 border-b border-border">
-            <Link href="/dashboard" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">
-                  O
-                </span>
-              </div>
-              <span className="font-bold text-lg">Olaking</span>
+            <Link href="/dashboard">
+              <Image
+                src="/images/header-logo.png"
+                alt="BAO OLAKING Logo"
+                width={100}
+                height={32}
+                className="h-8 w-auto"
+              />
             </Link>
           </div>
 

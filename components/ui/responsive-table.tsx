@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
   AccordionContent,
@@ -13,18 +14,33 @@ interface Column<T = Record<string, unknown>> {
   label: string;
   render?: (value: unknown, row: T) => ReactNode;
   isPrimary?: boolean;
+  type?: "status" | "default";
 }
 
 interface ResponsiveTableProps<T = Record<string, unknown>> {
   columns: Column<T>[];
   data: T[];
   keyField: keyof T;
+  getMobileTitle?: (row: T) => ReactNode;
 }
+
+const renderCellValue = (value: unknown, columnType?: string) => {
+  if (columnType === "status") {
+    const isActive = value === "Active" || value === true;
+    return (
+      <Badge variant={isActive ? "default" : "secondary"}>
+        {isActive ? "Active" : "Inactive"}
+      </Badge>
+    );
+  }
+  return String(value);
+};
 
 export function ResponsiveTable<T = Record<string, unknown>>({
   columns,
   data,
   keyField,
+  getMobileTitle,
 }: ResponsiveTableProps<T>) {
   return (
     <>
@@ -56,7 +72,7 @@ export function ResponsiveTable<T = Record<string, unknown>>({
                   >
                     {col.render
                       ? col.render(row[col.key as keyof T], row)
-                      : String(row[col.key as keyof T])}
+                      : renderCellValue(row[col.key as keyof T], col.type)}
                   </td>
                 ))}
               </tr>
@@ -69,11 +85,19 @@ export function ResponsiveTable<T = Record<string, unknown>>({
       <div className="md:hidden">
         <Accordion type="multiple" className="space-y-2">
           {data.map((row, idx) => {
-            const primaryCol =
-              columns.find((col) => col.isPrimary) || columns[0];
-            const primaryValue = primaryCol.render
-              ? primaryCol.render(row[primaryCol.key as keyof T], row)
-              : String(row[primaryCol.key as keyof T]);
+            // Use custom title generator if provided, otherwise use primary column
+            const primaryValue = getMobileTitle
+              ? getMobileTitle(row)
+              : (() => {
+                  const primaryCol =
+                    columns.find((col) => col.isPrimary) || columns[0];
+                  return primaryCol.render
+                    ? primaryCol.render(row[primaryCol.key as keyof T], row)
+                    : renderCellValue(
+                        row[primaryCol.key as keyof T],
+                        primaryCol.type
+                      );
+                })();
 
             return (
               <AccordionItem
@@ -99,7 +123,10 @@ export function ResponsiveTable<T = Record<string, unknown>>({
                         <span className="text-sm font-medium mt-1">
                           {col.render
                             ? col.render(row[col.key as keyof T], row)
-                            : String(row[col.key as keyof T])}
+                            : renderCellValue(
+                                row[col.key as keyof T],
+                                col.type
+                              )}
                         </span>
                       </div>
                     ))}
