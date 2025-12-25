@@ -143,7 +143,7 @@ CREATE INDEX idx_services_platform_active ON services(platform, is_active);
 CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  service_id UUID NOT NULL REFERENCES services(id) ON DELETE RESTRICT,
+  service_id UUID REFERENCES services(id) ON DELETE RESTRICT, -- NULL for wallet funding
   quantity INTEGER NOT NULL CHECK (quantity >= 100 AND quantity <= 500000),
   price_per_1k NUMERIC(10, 2) NOT NULL,
   total_price NUMERIC(10, 2) NOT NULL CHECK (total_price > 0),
@@ -158,7 +158,14 @@ CREATE TABLE orders (
   completed_at TIMESTAMPTZ,
   cancelled_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  -- Constraint to ensure service_id is provided for service orders, NULL for wallet funding
+  CONSTRAINT orders_service_or_wallet_funding_check 
+    CHECK (
+      (service_id IS NOT NULL AND link != 'wallet_funding') OR 
+      (service_id IS NULL AND link = 'wallet_funding')
+    )
 );
 
 -- Indexes for performance

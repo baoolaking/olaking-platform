@@ -79,7 +79,7 @@ export default async function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               <Link
-                href="/wallet/fund"
+                href="/dashboard/wallet"
                 className="text-primary hover:underline"
               >
                 Fund wallet
@@ -129,7 +129,7 @@ export default async function DashboardPage() {
           <CardDescription>Get started with your dashboard</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <Link href="/services">
+          <Link href="/dashboard/services">
             <Button className="w-full" size="lg">
               Browse Services
             </Button>

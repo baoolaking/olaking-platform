@@ -1,5 +1,8 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import {
   Card,
   CardContent,
@@ -8,38 +11,95 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { PasswordChangeForm } from "@/components/common/PasswordChangeForm";
 
-export default async function AdminSettingsPage() {
-  const supabase = await createClient();
+interface AdminSettings {
+  platform_name?: string;
+  support_email?: string;
+  support_whatsapp?: string;
+  auto_cancel_hours?: number;
+  payment_verification_hours?: number;
+  is_maintenance?: boolean;
+  maintenance_message?: string;
+}
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+interface AuditLog {
+  id: string;
+  action: string;
+  details?: any;
+  created_at: string;
+  users: {
+    full_name: string;
+    username: string;
+  };
+}
 
-  if (authError || !user) {
-    redirect("/login");
-  }
+export default function AdminSettingsPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings] = useState<AdminSettings | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // Fetch admin settings
-  const { data: settings, error: settingsError } = await supabase
-    .from("admin_settings")
-    .select("*")
-    .single();
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  if (settingsError) {
-    console.error("Error fetching settings:", settingsError);
-  }
+  const loadData = async () => {
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-  // Fetch audit logs
-  const { data: auditLogs, error: auditError } = await supabase
-    .from("admin_audit_logs")
-    .select("*, users (username, full_name)")
-    .order("created_at", { ascending: false })
-    .limit(20);
+      if (authError || !user) {
+        router.push("/login");
+        return;
+      }
 
-  if (auditError) {
-    console.error("Error fetching audit logs:", auditError);
+      setCurrentUser(user);
+
+      // Fetch admin settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from("admin_settings")
+        .select("*")
+        .single();
+
+      if (settingsError) {
+        console.error("Error fetching settings:", settingsError);
+      } else {
+        setSettings(settingsData);
+      }
+
+      // Fetch audit logs
+      const { data: auditLogsData, error: auditError } = await supabase
+        .from("admin_audit_logs")
+        .select("*, users (username, full_name)")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (auditError) {
+        console.error("Error fetching audit logs:", auditError);
+      } else {
+        setAuditLogs(auditLogsData || []);
+      }
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast.error("Failed to load admin settings");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-100">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
@@ -123,6 +183,13 @@ export default async function AdminSettingsPage() {
         </Card>
       </div>
 
+      {/* Admin Password Change Section */}
+      <PasswordChangeForm
+        userEmail={currentUser?.email || ""}
+        title="Change Admin Password"
+        description="Update your admin password to keep your account secure"
+      />
+
       {/* Maintenance Notice */}
       {settings?.is_maintenance && (
         <Card className="border-destructive">
@@ -161,17 +228,7 @@ export default async function AdminSettingsPage() {
                   <div className="space-y-1">
                     <p className="text-sm font-medium">{log.action}</p>
                     <p className="text-sm text-muted-foreground">
-                      by{" "}
-                      {
-                        (log.users as { full_name: string; username: string })
-                          ?.full_name
-                      }{" "}
-                      (@
-                      {
-                        (log.users as { full_name: string; username: string })
-                          ?.username
-                      }
-                      )
+                      by {log.users?.full_name} (@{log.users?.username})
                     </p>
                     {log.details && (
                       <p className="text-xs text-muted-foreground">

@@ -1,194 +1,156 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, RefreshCw, ExternalLink, Grid, List } from "lucide-react";
+import { OrderFilters } from "@/components/dashboard/orders/order-filters";
+import { OrderCard } from "@/components/dashboard/orders/order-card";
+import { OrdersTable } from "@/components/dashboard/orders/orders-table";
+import { Pagination } from "@/components/dashboard/orders/pagination";
+import { EmptyState } from "@/components/dashboard/orders/empty-state";
+import { useOrders } from "@/hooks/use-orders";
+import { useOrderFilters } from "@/hooks/use-order-filters";
+import { usePagination } from "@/hooks/use-pagination";
 
-type OrderStatus =
-  | "awaiting_payment"
-  | "pending"
-  | "completed"
-  | "failed"
-  | "awaiting_refund"
-  | "refunded";
-
-const statusColors: Record<OrderStatus, string> = {
-  awaiting_payment: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-  pending: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  completed: "bg-green-500/10 text-green-500 border-green-500/20",
-  failed: "bg-red-500/10 text-red-500 border-red-500/20",
-  awaiting_refund: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  refunded: "bg-purple-500/10 text-purple-500 border-purple-500/20",
-};
-
-export default async function OrdersPage() {
-  const supabase = await createClient();
+export default function OrdersPage() {
+  const { orders, isLoading, isRefreshing, handleRefresh } = useOrders();
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+    filteredOrders,
+    statusFilter,
+    setStatusFilter,
+    paymentMethodFilter,
+    setPaymentMethodFilter,
+    searchQuery,
+    setSearchQuery,
+    dateFilter,
+    setDateFilter,
+    clearFilters,
+    hasActiveFilters,
+  } = useOrderFilters(orders);
 
-  if (authError || !user) {
-    redirect("/login");
-  }
+  const { currentPage, totalPages, paginatedItems: currentOrders, goToPage, resetPage } = usePagination(filteredOrders, 5);
 
-  // Fetch orders with service details
-  const { data: orders, error: ordersError } = await supabase
-    .from("orders")
-    .select(
-      `
-      *,
-      services (
-        platform,
-        service_type,
-        price_per_1k
-      )
-    `
-    )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  // Reset pagination when filters change
+  useEffect(() => {
+    resetPage();
+  }, [filteredOrders.length, resetPage]);
 
-  if (ordersError) {
-    console.error("Error fetching orders:", ordersError);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Orders</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Orders</h1>
           <p className="text-muted-foreground">
             View and manage your service orders
           </p>
         </div>
-        <Link href="/services">
-          <Button>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Browse Services
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          {/* View Toggle - Hidden on mobile */}
+          <div className="hidden md:flex items-center gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              variant={viewMode === 'cards' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('cards')}
+              className="h-8 px-3"
+            >
+              <Grid className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Cards</span>
+            </Button>
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+              className="h-8 px-3"
+            >
+              <List className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Table</span>
+            </Button>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="w-full sm:w-auto"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
-        </Link>
+          <Link href="/dashboard/services" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              <span className="sm:inline">Browse Services</span>
+            </Button>
+          </Link>
+        </div>
       </div>
 
+      {/* Filters */}
+      <OrderFilters
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        paymentMethodFilter={paymentMethodFilter}
+        setPaymentMethodFilter={setPaymentMethodFilter}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        onClearFilters={clearFilters}
+        totalResults={orders.length}
+        filteredResults={filteredOrders.length}
+        currentResults={currentOrders.length}
+      />
+
       {/* Orders List */}
-      {!orders || orders.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                <ExternalLink className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">No orders yet</h3>
-                <p className="text-muted-foreground">
-                  Start by browsing our services
-                </p>
-              </div>
-              <Link href="/services">
-                <Button>Browse Services</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+      {currentOrders.length === 0 ? (
+        <EmptyState
+          hasOrders={orders.length > 0}
+          hasFilters={hasActiveFilters}
+          onClearFilters={clearFilters}
+        />
       ) : (
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <Card key={order.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg">
-                      {order.services?.platform?.toUpperCase()} -{" "}
-                      {order.services?.service_type}
-                    </CardTitle>
-                    <CardDescription>
-                      Order ID: {order.id.slice(0, 8)}...
-                    </CardDescription>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={statusColors[order.status as OrderStatus]}
-                  >
-                    {order.status.replace("_", " ").toUpperCase()}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Quantity</p>
-                    <p className="font-medium">
-                      {order.quantity.toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Total Price</p>
-                    <p className="font-medium">
-                      ₦{order.total_price.toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Quality</p>
-                    <p className="font-medium capitalize">
-                      {order.quality_type.replace("_", " ")}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">
-                      Payment Method
-                    </p>
-                    <p className="font-medium capitalize">
-                      {order.payment_method.replace("_", " ")}
-                    </p>
-                  </div>
-                </div>
+        <>
+          {/* Always show cards on mobile (md and below), allow toggle on desktop */}
+          <div className="block md:hidden">
+            <div className="space-y-4">
+              {currentOrders.map((order) => (
+                <OrderCard key={order.id} order={order} />
+              ))}
+            </div>
+          </div>
 
-                <div className="mt-4 pt-4 border-t border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Link</p>
-                  <a
-                    href={order.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline flex items-center"
-                  >
-                    {order.link}
-                    <ExternalLink className="ml-1 h-3 w-3" />
-                  </a>
-                </div>
+          <div className="hidden md:block">
+            {viewMode === 'cards' ? (
+              <div className="space-y-4">
+                {currentOrders.map((order) => (
+                  <OrderCard key={order.id} order={order} />
+                ))}
+              </div>
+            ) : (
+              <OrdersTable orders={currentOrders} />
+            )}
+          </div>
 
-                <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    Created: {new Date(order.created_at).toLocaleDateString()}
-                  </span>
-                  {order.completed_at && (
-                    <span>
-                      Completed:{" "}
-                      {new Date(order.completed_at).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-
-                {order.admin_notes && (
-                  <div className="mt-4 p-3 bg-muted rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">
-                      Admin Notes
-                    </p>
-                    <p className="text-sm">{order.admin_notes}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+          />
+        </>
       )}
     </div>
   );

@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, XCircle, User } from "lucide-react";
+import { PasswordChangeForm } from "@/components/common/PasswordChangeForm";
 
 const profileSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters"),
@@ -329,6 +330,13 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Password Change Section */}
+      <PasswordChangeForm
+        userEmail={userData.email}
+        title="Change Password"
+        description="Update your password to keep your account secure"
+      />
     </div>
   );
 }

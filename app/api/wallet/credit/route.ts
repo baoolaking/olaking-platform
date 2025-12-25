@@ -1,0 +1,69 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    
+    // Get the authenticated user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Check if user is admin
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData || !["super_admin", "sub_admin"].includes(userData.role)) {
+      return NextResponse.json(
+        { error: "Forbidden - Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const { userId, amount, description, orderId } = await request.json();
+
+    if (!userId || !amount || !description) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Call the database function to credit wallet
+    const { data, error } = await supabase.rpc("credit_wallet", {
+      p_user_id: userId,
+      p_amount: amount,
+      p_description: description,
+      p_order_id: orderId || null,
+      p_created_by: user.id,
+    });
+
+    if (error) {
+      console.error("Error crediting wallet:", error);
+      return NextResponse.json(
+        { error: "Failed to credit wallet" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Wallet credit error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
