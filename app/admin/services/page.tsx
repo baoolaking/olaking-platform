@@ -40,6 +40,7 @@ export default async function AdminServicesPage() {
     .select("service_id")
     .in("service_id", serviceIds);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const orderCountMap = orderCounts?.reduce(
     (acc: Record<string, number>, order: { service_id: string }) => {
       acc[order.service_id] = (acc[order.service_id] || 0) + 1;

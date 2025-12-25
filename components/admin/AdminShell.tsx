@@ -25,7 +25,7 @@ export function AdminShell({ userRole, userName, children }: AdminShellProps) {
         onToggleMobile={setIsMobileMenuOpen}
         onCloseMobile={closeSidebar}
       />
-      <main className="lg:pl-68 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="lg:pl-68 max-w-360 mx-auto p-4 sm:p-6 lg:p-8">
         <AdminHeader userName={userName} onToggleSidebar={toggleSidebar} />
         {children}
       </main>

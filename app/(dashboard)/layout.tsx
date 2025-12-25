@@ -18,15 +18,19 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // Fetch user role for sidebar
+  // Fetch user role and wallet balance
   const { data: userData } = await supabase
     .from("users")
-    .select("role, full_name")
+    .select("role, full_name, wallet_balance")
     .eq("id", user.id)
     .single();
 
   return (
-    <DashboardShell userRole={userData?.role} fullName={userData?.full_name}>
+    <DashboardShell 
+      userRole={userData?.role} 
+      fullName={userData?.full_name}
+      walletBalance={userData?.wallet_balance}
+    >
       {children}
     </DashboardShell>
   );

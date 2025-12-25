@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
+import { lookupUserByIdentifier } from "./actions";
 
 export default function LoginContent() {
   const router = useRouter();
@@ -76,15 +77,11 @@ export default function LoginContent() {
     try {
       const identifier = data.identifier.trim();
 
-      const { data: userRecord, error: lookupError } = await supabase
-        .from("users")
-        .select("id,email,role,is_active")
-        .or(
-          `username.eq.${identifier},whatsapp_no.eq.${identifier},email.eq.${identifier}`
-        )
-        .single();
+      // Use server action to lookup user (bypasses RLS)
+      const { user: userRecord, error: lookupErrorMsg } =
+        await lookupUserByIdentifier(identifier);
 
-      if (lookupError || !userRecord) {
+      if (lookupErrorMsg || !userRecord) {
         toast.error("Account not found", {
           description: "Check your username or WhatsApp number and try again.",
           icon: <XCircle className="h-5 w-5" />,

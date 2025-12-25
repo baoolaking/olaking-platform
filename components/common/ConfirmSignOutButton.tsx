@@ -66,7 +66,11 @@ export function ConfirmSignOutButton({
             <Button variant="outline">Stay logged in</Button>
           </DialogClose>
           <form action="/api/auth/signout" method="POST">
-            <Button type="submit" variant="destructive" className="gap-2">
+            <Button
+              type="submit"
+              variant="destructive"
+              className="gap-2 w-full md:w-fit"
+            >
               <LogOut className="h-4 w-4" />
               Sign out
             </Button>

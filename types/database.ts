@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       admin_audit_logs: {
@@ -278,7 +303,6 @@ export type Database = {
           id: string
           is_active: boolean | null
           last_login_at: string | null
-          password_hash: string
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
           username: string
@@ -296,7 +320,6 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_login_at?: string | null
-          password_hash: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
           username: string
@@ -314,7 +337,6 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_login_at?: string | null
-          password_hash?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
           username?: string
@@ -411,6 +433,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_email_by_identifier: {
+        Args: { p_identifier: string }
+        Returns: string
+      }
+      is_admin: { Args: { p_user_id: string }; Returns: boolean }
+      is_super_admin: { Args: { p_user_id: string }; Returns: boolean }
+      is_username_taken: { Args: { p_username: string }; Returns: boolean }
+      is_whatsapp_taken: { Args: { p_whatsapp: string }; Returns: boolean }
       log_admin_action: {
         Args: {
           p_action: string
@@ -421,6 +451,13 @@ export type Database = {
           p_old_values?: Json
         }
         Returns: undefined
+      }
+      upgrade_user_role: {
+        Args: {
+          p_email: string
+          p_new_role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: boolean
       }
     }
     Enums: {
@@ -568,6 +605,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       order_status: [

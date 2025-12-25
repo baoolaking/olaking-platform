@@ -7,12 +7,14 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 interface DashboardShellProps {
   userRole?: string;
   fullName?: string;
+  walletBalance?: number;
   children: React.ReactNode;
 }
 
 export function DashboardShell({
   userRole,
   fullName,
+  walletBalance,
   children,
 }: DashboardShellProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -28,8 +30,8 @@ export function DashboardShell({
         onToggleMobile={setIsMobileMenuOpen}
         onCloseMobile={closeSidebar}
       />
-      <main className="lg:pl-68 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <DashboardHeader subtitle={fullName} onToggleSidebar={toggleSidebar} />
+      <main className="lg:pl-68 max-w-360 mx-auto p-4 sm:p-6 lg:p-8">
+        <DashboardHeader subtitle={fullName} walletBalance={walletBalance} onToggleSidebar={toggleSidebar} />
         {children}
       </main>
     </div>
