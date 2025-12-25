@@ -20,8 +20,8 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   return (
     <header className="sticky top-0 z-20 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60 mb-6 border-b">
-      <div className="flex items-center justify-between py-4 gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between py-3 sm:py-4 gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           {onToggleSidebar && (
             <Button
               variant="secondary"
@@ -29,22 +29,22 @@ export function DashboardHeader({
               className="inline-flex lg:hidden rounded-lg border-2 border-primary bg-primary/10 shadow-md hover:bg-primary/20 shrink-0"
               onClick={onToggleSidebar}
             >
-              <Menu className="h-6 w-6 text-primary" />
+              <Menu className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               <span className="sr-only">Toggle sidebar</span>
             </Button>
           )}
-          <div>
-            <h1 className="text-xl font-semibold leading-tight">{title}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg sm:text-xl font-semibold leading-tight truncate">{title}</h1>
             {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate hidden sm:block">{subtitle}</p>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {walletBalance !== undefined && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 border border-primary/20">
-              <Wallet className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">
+            <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-primary/10 border border-primary/20">
+              <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+              <span className="text-xs sm:text-sm font-semibold">
                 ₦{walletBalance.toLocaleString()}
               </span>
             </div>

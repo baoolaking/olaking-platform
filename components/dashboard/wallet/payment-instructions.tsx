@@ -3,22 +3,28 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Send } from "lucide-react";
 import { toast } from "sonner";
 import { BankAccount } from "@/hooks/use-wallet";
+import { createClient } from "@/lib/supabase/client";
 
 interface PaymentInstructionsProps {
   amount: number;
   bankAccountId: string;
   bankAccounts: BankAccount[];
+  orderId: string;
+  onPaymentConfirmed?: () => void;
 }
 
 export function PaymentInstructions({
   amount,
   bankAccountId,
   bankAccounts,
+  orderId,
+  onPaymentConfirmed,
 }: PaymentInstructionsProps) {
   const [copiedItems, setCopiedItems] = useState<{ [key: string]: boolean }>({});
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const selectedAccount = bankAccounts.find(acc => acc.id === bankAccountId);
 
@@ -34,6 +40,43 @@ export function PaymentInstructions({
     } catch (error) {
       console.error("Failed to copy:", error);
       toast.error("Failed to copy to clipboard");
+    }
+  };
+
+  const handlePaymentConfirmation = async () => {
+    console.log("🔄 Starting payment confirmation for order:", orderId);
+    setIsConfirming(true);
+
+    try {
+      console.log("📡 Making API call to /api/wallet/confirm-payment");
+      const response = await fetch("/api/wallet/confirm-payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId }),
+      });
+
+      console.log("📡 API Response status:", response.status);
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("❌ API Error:", error);
+        throw new Error(error.error || "Failed to confirm payment");
+      }
+
+      const result = await response.json();
+      console.log("✅ API Success:", result);
+
+      toast.success("Payment confirmation sent to admin! You'll be notified once verified.");
+
+      // Call the callback to switch to waiting state
+      console.log("🔄 Switching to waiting state");
+      onPaymentConfirmed?.();
+    } catch (error) {
+      console.error("💥 Error confirming payment:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to confirm payment");
+      setIsConfirming(false); // Only reset on error, success will switch to waiting state
     }
   };
 
@@ -131,9 +174,28 @@ export function PaymentInstructions({
             </div>
           </div>
         </div>
-        <p className="text-sm text-orange-600 dark:text-orange-400">
-          After making the payment, please wait for admin confirmation. We check payments every few minutes.
-        </p>
+        <div className="pt-4 space-y-3">
+          <p className="text-sm text-orange-600 dark:text-orange-400">
+            After making the payment, click the button below to notify our admin team.
+          </p>
+          <Button
+            onClick={handlePaymentConfirmation}
+            disabled={isConfirming}
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+          >
+            {isConfirming ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                Confirming...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                I've Sent the Money
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

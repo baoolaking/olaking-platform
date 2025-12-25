@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,12 +40,12 @@ export function EditOrderDialog({
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Update state when order changes
-  useState(() => {
+  useEffect(() => {
     if (order) {
       setNewStatus(order.status);
       setAdminNotes(order.admin_notes || "");
     }
-  });
+  }, [order]);
 
   const handleUpdate = async () => {
     if (!order) return;
@@ -85,6 +85,7 @@ export function EditOrderDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="awaiting_payment">Awaiting Payment</SelectItem>
+                <SelectItem value="awaiting_confirmation">Awaiting Confirmation</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="failed">Failed</SelectItem>

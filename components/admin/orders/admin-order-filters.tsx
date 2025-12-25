@@ -88,6 +88,7 @@ export function AdminOrderFilters({
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="awaiting_payment">Awaiting Payment</SelectItem>
+                <SelectItem value="awaiting_confirmation">Awaiting Confirmation</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="failed">Failed</SelectItem>

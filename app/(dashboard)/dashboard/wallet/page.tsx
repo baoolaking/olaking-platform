@@ -5,6 +5,9 @@ import { Loader2 } from "lucide-react";
 import { WalletBalanceCard } from "@/components/dashboard/wallet/wallet-balance-card";
 import { FundingForm } from "@/components/dashboard/wallet/funding-form";
 import { PaymentInstructions } from "@/components/dashboard/wallet/payment-instructions";
+import { PaymentWaitingState } from "@/components/dashboard/wallet/payment-waiting-state";
+import { MigrationStatusChecker } from "@/components/dashboard/wallet/migration-status";
+// import { TestPaymentButton } from "@/components/debug/test-payment-button";
 import { TransactionHistory } from "@/components/dashboard/wallet/transaction-history";
 import { useWallet } from "@/hooks/use-wallet";
 import { useWalletFunding } from "@/hooks/use-wallet-funding";
@@ -12,7 +15,7 @@ import { fundWalletSchema, type FundWalletInput } from "@/lib/validations/wallet
 
 export default function WalletPage() {
   const { userData, bankAccounts, transactions, minFundingAmount, isLoading, loadData } = useWallet();
-  const { isFunding, isPolling, pendingPayment, createFundingRequest } = useWalletFunding(userData, loadData);
+  const { isFunding, isPolling, pendingPayment, isConfirmed, createFundingRequest, handlePaymentConfirmed, refreshPaymentStatus } = useWalletFunding(userData, loadData);
   const [showFundingForm, setShowFundingForm] = useState(false);
 
   const handleFundWallet = () => {
@@ -55,6 +58,12 @@ export default function WalletPage() {
         <p className="text-muted-foreground">Manage your wallet balance and transactions</p>
       </div>
 
+      {/* Migration Status Checker */}
+      <MigrationStatusChecker />
+
+      {/* Debug Tool - Remove this after fixing */}
+      {/* <TestPaymentButton /> */}
+
       {/* Wallet Balance Card */}
       <WalletBalanceCard
         balance={userData.wallet_balance}
@@ -74,13 +83,25 @@ export default function WalletPage() {
         />
       )}
 
-      {/* Pending Payment Instructions */}
+      {/* Pending Payment Instructions or Waiting State */}
       {pendingPayment && (
-        <PaymentInstructions
-          amount={pendingPayment.amount}
-          bankAccountId={pendingPayment.bank_account_id}
-          bankAccounts={bankAccounts}
-        />
+        <>
+          {!isConfirmed ? (
+            <PaymentInstructions
+              amount={pendingPayment.amount}
+              bankAccountId={pendingPayment.bank_account_id}
+              bankAccounts={bankAccounts}
+              orderId={pendingPayment.order_id}
+              onPaymentConfirmed={handlePaymentConfirmed}
+            />
+          ) : (
+            <PaymentWaitingState
+              orderId={pendingPayment.order_id}
+              amount={pendingPayment.amount}
+              onRefresh={refreshPaymentStatus}
+            />
+          )}
+        </>
       )}
 
       {/* Transaction History */}

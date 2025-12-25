@@ -20,6 +20,7 @@ const statusColors: Record<string, string> = {
   completed: "bg-green-500/10 text-green-500 border-green-500/20",
   cancelled: "bg-red-500/10 text-red-500 border-red-500/20",
   awaiting_payment: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  awaiting_confirmation: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   failed: "bg-red-500/10 text-red-500 border-red-500/20",
   awaiting_refund: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   refunded: "bg-purple-500/10 text-purple-500 border-purple-500/20",

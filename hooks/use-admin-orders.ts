@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
-export type OrderStatus = "awaiting_payment" | "pending" | "completed" | "failed" | "awaiting_refund" | "refunded";
+export type OrderStatus = "awaiting_payment" | "awaiting_confirmation" | "pending" | "completed" | "failed" | "awaiting_refund" | "refunded";
 
 export interface Order {
   id: string;

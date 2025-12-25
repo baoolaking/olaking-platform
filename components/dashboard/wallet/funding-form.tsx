@@ -94,7 +94,7 @@ export function FundingForm({
                 onValueChange={(value) => setValue("bank_account_id", value)}
                 disabled={isFunding}
               >
-                <SelectTrigger>
+                <SelectTrigger className="text-left">
                   <SelectValue placeholder="Choose bank account..." />
                 </SelectTrigger>
                 <SelectContent className="z-50">
