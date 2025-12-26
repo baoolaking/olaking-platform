@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import {
   Clock,
   CheckCircle2,
@@ -29,22 +30,119 @@ export function PaymentWaitingState({
 }: PaymentWaitingStateProps) {
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [isAutoUpdating, setIsAutoUpdating] = useState(false);
+  const [maxWaitTime] = useState(() => {
+    // Random time between 50-60 seconds
+    return Math.floor(Math.random() * 11) + 50;
+  });
+
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const autoUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup function
+  const cleanup = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    if (autoUpdateTimeoutRef.current) {
+      clearTimeout(autoUpdateTimeoutRef.current);
+      autoUpdateTimeoutRef.current = null;
+    }
+    if (timeIntervalRef.current) {
+      clearInterval(timeIntervalRef.current);
+      timeIntervalRef.current = null;
+    }
+  };
+
+  // Poll for status updates every 10 seconds
+  const pollOrderStatus = async () => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/status`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status !== 'awaiting_confirmation') {
+          console.log(`Wallet funding order ${orderId} status changed to ${data.status}, stopping polling`);
+          cleanup();
+          onRefresh?.();
+          return true; // Status changed
+        }
+      }
+    } catch (error) {
+      console.error('Error polling wallet funding order status:', error);
+    }
+    return false; // Status unchanged
+  };
+
+  // Auto-update order to pending status
+  const autoUpdateToPending = async () => {
+    if (isAutoUpdating) return;
+
+    setIsAutoUpdating(true);
+    console.log(`Auto-updating wallet funding order ${orderId} to pending status after ${maxWaitTime} seconds`);
+
+    try {
+      const response = await fetch(`/api/orders/${orderId}/auto-update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'pending',
+          reason: 'auto_confirmation_timeout'
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Payment verified! Your wallet has been credited.");
+        cleanup();
+        onRefresh?.();
+      } else {
+        console.error('Failed to auto-update wallet funding order status');
+        setIsAutoUpdating(false);
+      }
+    } catch (error) {
+      console.error('Error auto-updating wallet funding order:', error);
+      setIsAutoUpdating(false);
+    }
+  };
 
   // Timer effect
   useEffect(() => {
-    const interval = setInterval(() => {
+    timeIntervalRef.current = setInterval(() => {
       setTimeElapsed(prev => prev + 1);
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (timeIntervalRef.current) {
+        clearInterval(timeIntervalRef.current);
+      }
+    };
   }, []);
 
-  // Progress effect (simulated progress over 30 minutes)
+  // Setup polling and auto-update
   useEffect(() => {
-    const maxTime = 30 * 60; // 30 minutes in seconds
-    const currentProgress = Math.min((timeElapsed / maxTime) * 100, 100);
+    // Start polling every 10 seconds
+    pollIntervalRef.current = setInterval(async () => {
+      const statusChanged = await pollOrderStatus();
+      if (statusChanged) return; // Stop if status changed
+    }, 10000);
+
+    // Setup auto-update timeout
+    autoUpdateTimeoutRef.current = setTimeout(() => {
+      autoUpdateToPending();
+    }, maxWaitTime * 1000);
+
+    // Cleanup on unmount
+    return cleanup;
+  }, [orderId, maxWaitTime]);
+
+  // Progress effect (based on maxWaitTime instead of fixed 30 minutes)
+  useEffect(() => {
+    const currentProgress = Math.min((timeElapsed / maxWaitTime) * 100, 100);
     setProgress(currentProgress);
-  }, [timeElapsed]);
+  }, [timeElapsed, maxWaitTime]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -53,10 +151,10 @@ export function PaymentWaitingState({
   };
 
   const getEstimatedTime = () => {
-    if (timeElapsed < 300) return "Usually within 5 minutes";
-    if (timeElapsed < 900) return "Usually within 15 minutes";
-    if (timeElapsed < 1800) return "Usually within 30 minutes";
-    return "Taking longer than usual";
+    const remaining = Math.max(0, maxWaitTime - timeElapsed);
+    if (remaining > 30) return `Auto-crediting in ~${Math.ceil(remaining / 10) * 10}s`;
+    if (remaining > 0) return `Auto-crediting in ${remaining}s`;
+    return "Crediting wallet automatically...";
   };
 
   const getProgressColor = () => {
@@ -101,20 +199,34 @@ export function PaymentWaitingState({
         {/* Status Badge */}
         <div className="flex justify-center">
           <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700">
-            <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-            Awaiting Confirmation
+            {isAutoUpdating ? (
+              <>
+                <CheckCircle2 className="h-3 w-3 mr-1 text-green-600" />
+                Auto-Processing
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                Awaiting Confirmation
+              </>
+            )}
           </Badge>
         </div>
 
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Verification Progress</span>
+            <span className="text-muted-foreground">
+              {isAutoUpdating ? "Auto-Processing" : "Verification Progress"}
+            </span>
             <span className="text-muted-foreground">{formatTime(timeElapsed)}</span>
           </div>
           <Progress
             value={progress}
-            className={`h-2 transition-all duration-1000 ${progress < 100 ? 'animate-pulse' : ''}`}
+            className={`h-2 transition-all duration-1000 ${isAutoUpdating
+              ? 'bg-green-100 [&>div]:bg-green-500'
+              : progress < 100 ? 'animate-pulse' : ''
+              }`}
           />
           <p className="text-xs text-center text-muted-foreground">
             {getEstimatedTime()}
@@ -151,16 +263,19 @@ export function PaymentWaitingState({
           </h4>
           <ul className="text-sm text-muted-foreground space-y-1">
             <li className="flex items-start">
-              <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
+              <div className={`w-2 h-2 ${isAutoUpdating ? 'bg-green-500' : 'bg-green-500'} rounded-full mt-2 mr-2 flex-shrink-0`}></div>
               Your payment confirmation has been sent to our admin team
             </li>
             <li className="flex items-start">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-2 flex-shrink-0"></div>
+              <div className={`w-2 h-2 ${timeElapsed > 10 ? 'bg-green-500' : 'bg-yellow-500'} rounded-full mt-2 mr-2 flex-shrink-0`}></div>
               We're checking our bank account for your transfer
             </li>
             <li className="flex items-start">
-              <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-2 flex-shrink-0"></div>
-              Once verified, your wallet will be credited automatically
+              <div className={`w-2 h-2 ${isAutoUpdating ? 'bg-green-500' : 'bg-gray-400'} rounded-full mt-2 mr-2 flex-shrink-0`}></div>
+              {isAutoUpdating
+                ? "Auto-crediting your wallet now"
+                : `Auto-crediting in ${Math.max(0, maxWaitTime - timeElapsed)}s if not manually verified`
+              }
             </li>
           </ul>
         </div>
@@ -171,9 +286,10 @@ export function PaymentWaitingState({
             onClick={onRefresh}
             variant="outline"
             className="w-full"
+            disabled={isAutoUpdating}
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Check Status
+            <RefreshCw className={`h-4 w-4 mr-2 ${isAutoUpdating ? 'animate-spin' : ''}`} />
+            {isAutoUpdating ? 'Processing...' : 'Check Status'}
           </Button>
 
           {/* Support Section */}
@@ -221,16 +337,16 @@ export function PaymentWaitingState({
         </div>
 
         {/* Time-based Messages */}
-        {timeElapsed > 1800 && (
-          <div className="bg-orange-50 dark:bg-orange-950 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+        {timeElapsed > maxWaitTime && !isAutoUpdating && (
+          <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg border border-green-200 dark:border-green-800">
             <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 mr-2 flex-shrink-0" />
+              <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
-                  Taking longer than usual?
+                <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                  Auto-crediting initiated!
                 </p>
-                <p className="text-xs text-orange-600 dark:text-orange-300 mt-1">
-                  If it's been over 30 minutes, please contact our support team for immediate assistance.
+                <p className="text-xs text-green-600 dark:text-green-300 mt-1">
+                  Your wallet is being automatically credited. You'll be notified once complete.
                 </p>
               </div>
             </div>

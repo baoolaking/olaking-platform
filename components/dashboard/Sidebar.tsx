@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, ShoppingBag, User, Wallet } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, User, Wallet, Settings } from "lucide-react";
 import { useState } from "react";
 import { ConfirmSignOutButton } from "@/components/common/ConfirmSignOutButton";
 
@@ -20,6 +20,11 @@ const navigation = [
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    name: "Services",
+    href: "/dashboard/services",
+    icon: Settings,
   },
   {
     name: "Orders",

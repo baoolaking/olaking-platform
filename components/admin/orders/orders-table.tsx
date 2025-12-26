@@ -7,6 +7,7 @@ import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { Edit, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet/utils";
 import { Order } from "@/hooks/use-admin-orders";
+import { SendNotificationButton } from "./send-notification-button";
 
 interface OrdersTableProps {
   orders: Order[];
@@ -161,6 +162,7 @@ export function OrdersTable({ orders, onEditOrder, onWalletUpdate }: OrdersTable
                   >
                     <Wallet className="h-3 w-3" />
                   </Button>
+                  <SendNotificationButton order={row} />
                 </div>
               ),
             },

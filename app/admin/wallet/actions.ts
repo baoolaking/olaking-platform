@@ -113,6 +113,11 @@ export async function updateUserWallet(
   });
 
   revalidatePath("/admin/orders");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/services");
+  revalidatePath("/dashboard/wallet");
+  revalidatePath("/dashboard/profile");
+  revalidatePath("/admin/users");
   
   return {
     success: true,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,6 +58,13 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Revalidate pages that show wallet balance
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/services");
+    revalidatePath("/dashboard/wallet");
+    revalidatePath("/dashboard/profile");
+    revalidatePath("/admin/users");
 
     return NextResponse.json({ success: true });
   } catch (error) {

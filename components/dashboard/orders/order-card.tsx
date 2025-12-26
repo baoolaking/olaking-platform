@@ -27,9 +27,12 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet/utils";
 import { formatPlatformName, formatServiceType } from "@/lib/validations/wallet";
+import { PaymentConfirmationSection } from "./payment-confirmation-section";
+import { AwaitingConfirmationSection } from "./awaiting-confirmation-section";
 
 type OrderStatus =
   | "awaiting_payment"
+  | "awaiting_confirmation"
   | "pending"
   | "completed"
   | "failed"
@@ -68,6 +71,7 @@ interface Order {
 
 interface OrderCardProps {
   order: Order;
+  onRefresh?: () => void;
 }
 
 const statusConfig: Record<OrderStatus, {
@@ -81,6 +85,12 @@ const statusConfig: Record<OrderStatus, {
     icon: <Clock className="h-4 w-4" />,
     label: "Awaiting Payment",
     description: "Please complete your payment to process this order"
+  },
+  awaiting_confirmation: {
+    color: "bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400",
+    icon: <RefreshCw className="h-4 w-4 animate-spin" />,
+    label: "Awaiting Confirmation",
+    description: "We're verifying your payment confirmation"
   },
   pending: {
     color: "bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400",
@@ -114,7 +124,7 @@ const statusConfig: Record<OrderStatus, {
   },
 };
 
-export function OrderCard({ order }: OrderCardProps) {
+export function OrderCard({ order, onRefresh }: OrderCardProps) {
   const [copiedItems, setCopiedItems] = useState<{ [key: string]: boolean }>({});
 
   const statusInfo = statusConfig[order.status];
@@ -330,7 +340,24 @@ export function OrderCard({ order }: OrderCardProps) {
                 After payment, please wait for admin confirmation. We verify payments regularly.
               </p>
             </div>
+
+            {/* Payment Confirmation Section */}
+            <PaymentConfirmationSection
+              orderId={order.id}
+              amount={order.total_price}
+              onStatusUpdate={onRefresh}
+            />
           </div>
+        )}
+
+        {/* Awaiting Confirmation Section */}
+        {order.status === "awaiting_confirmation" && order.payment_method === "bank_transfer" && (
+          <AwaitingConfirmationSection
+            orderId={order.id}
+            amount={order.total_price}
+            createdAt={order.created_at}
+            onRefresh={onRefresh}
+          />
         )}
 
         {/* Link (for service orders) */}

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAdminAction, extractAuditFields } from "@/lib/audit/logAdminAction";
+import { sendOrderStatusNotification } from "@/lib/email/order-notifications";
 
 export async function updateOrderStatus(
   orderId: string,
@@ -34,10 +35,14 @@ export async function updateOrderStatus(
     throw new Error("Insufficient permissions");
   }
 
-  // Get current order data for audit log
+  // Get current order data for audit log and email notification
   const { data: currentOrder, error: orderError } = await adminClient
     .from("orders")
-    .select("*")
+    .select(`
+      *,
+      users!orders_user_id_fkey(email, full_name),
+      services!orders_service_id_fkey(platform, service_type)
+    `)
     .eq("id", orderId)
     .single();
 
@@ -66,6 +71,31 @@ export async function updateOrderStatus(
 
   if (error) {
     throw new Error(`Failed to update order status: ${error.message}`);
+  }
+
+  // Send email notification to user if status changed
+  if (newStatus !== currentOrder.status) {
+    try {
+      await sendOrderStatusNotification(newStatus, {
+        orderId: orderId,
+        userEmail: currentOrder.users.email,
+        userName: currentOrder.users.full_name || 'Customer',
+        orderDetails: {
+          platform: currentOrder.services.platform,
+          serviceType: currentOrder.services.service_type,
+          quantity: currentOrder.quantity,
+          totalPrice: currentOrder.total_price,
+          link: currentOrder.link,
+          paymentMethod: currentOrder.payment_method,
+        },
+        adminNotes: adminNotes,
+      });
+      
+      console.log(`📧 Email notification sent for order ${orderId} status change: ${currentOrder.status} → ${newStatus}`);
+    } catch (emailError) {
+      console.error(`Failed to send email notification for order ${orderId}:`, emailError);
+      // Don't fail the entire operation if email fails
+    }
   }
 
   // Log the admin action

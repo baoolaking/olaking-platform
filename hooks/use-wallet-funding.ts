@@ -68,7 +68,8 @@ export function useWalletFunding(userData: UserData | null, onDataReload: () => 
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isPolling && pendingPayment) {
-      interval = setInterval(checkPaymentStatus, 60000); // Poll every minute
+      // Poll every 10 seconds instead of 60 seconds for faster updates
+      interval = setInterval(checkPaymentStatus, 10000);
     }
     return () => {
       if (interval) clearInterval(interval);

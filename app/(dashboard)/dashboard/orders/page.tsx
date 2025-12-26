@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, ExternalLink, Grid, List } from "lucide-react";
+import { Loader2, RefreshCw, ExternalLink, Grid, List, Filter, ChevronDown, ChevronUp } from "lucide-react";
 import { OrderFilters } from "@/components/dashboard/orders/order-filters";
 import { OrderCard } from "@/components/dashboard/orders/order-card";
 import { OrdersTable } from "@/components/dashboard/orders/orders-table";
@@ -16,6 +16,7 @@ import { usePagination } from "@/hooks/use-pagination";
 export default function OrdersPage() {
   const { orders, isLoading, isRefreshing, handleRefresh } = useOrders();
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [showFiltersOnMobile, setShowFiltersOnMobile] = useState(false);
 
   const {
     filteredOrders,
@@ -98,21 +99,47 @@ export default function OrdersPage() {
         </div>
       </div>
 
+      {/* Mobile Filter Toggle Button */}
+      <div className="md:hidden">
+        <Button
+          variant="outline"
+          onClick={() => setShowFiltersOnMobile(!showFiltersOnMobile)}
+          className="w-full justify-between"
+        >
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            <span>Filters</span>
+            {hasActiveFilters && (
+              <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                Active
+              </span>
+            )}
+          </div>
+          {showFiltersOnMobile ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
       {/* Filters */}
-      <OrderFilters
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        paymentMethodFilter={paymentMethodFilter}
-        setPaymentMethodFilter={setPaymentMethodFilter}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        dateFilter={dateFilter}
-        setDateFilter={setDateFilter}
-        onClearFilters={clearFilters}
-        totalResults={orders.length}
-        filteredResults={filteredOrders.length}
-        currentResults={currentOrders.length}
-      />
+      <div className={`md:block ${showFiltersOnMobile ? 'block' : 'hidden'}`}>
+        <OrderFilters
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          paymentMethodFilter={paymentMethodFilter}
+          setPaymentMethodFilter={setPaymentMethodFilter}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          dateFilter={dateFilter}
+          setDateFilter={setDateFilter}
+          onClearFilters={clearFilters}
+          totalResults={orders.length}
+          filteredResults={filteredOrders.length}
+          currentResults={currentOrders.length}
+        />
+      </div>
 
       {/* Orders List */}
       {currentOrders.length === 0 ? (
@@ -127,7 +154,7 @@ export default function OrdersPage() {
           <div className="block md:hidden">
             <div className="space-y-4">
               {currentOrders.map((order) => (
-                <OrderCard key={order.id} order={order} />
+                <OrderCard key={order.id} order={order} onRefresh={handleRefresh} />
               ))}
             </div>
           </div>
@@ -136,7 +163,7 @@ export default function OrdersPage() {
             {viewMode === 'cards' ? (
               <div className="space-y-4">
                 {currentOrders.map((order) => (
-                  <OrderCard key={order.id} order={order} />
+                  <OrderCard key={order.id} order={order} onRefresh={handleRefresh} />
                 ))}
               </div>
             ) : (
