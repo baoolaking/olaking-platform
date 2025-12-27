@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { UserX } from "lucide-react";
 import { deactivateUser } from "@/app/admin/users/actions";
+import { toast } from "sonner";
 
 interface DeactivateUserButtonProps {
   id: string;
@@ -36,17 +37,18 @@ export function DeactivateUserButton({
     // Additional check: Sub admins cannot deactivate admin accounts
     if (currentUserRole === "sub_admin" &&
       (targetUserRole === "sub_admin" || targetUserRole === "super_admin")) {
-      alert("You don't have permission to deactivate admin accounts.");
+      toast.error("You don't have permission to deactivate admin accounts.");
       return;
     }
 
     startTransition(async () => {
       try {
         await deactivateUser(id);
+        toast.success("User account deactivated successfully!");
         setOpen(false);
       } catch (error) {
         console.error("Error:", error);
-        alert(
+        toast.error(
           error instanceof Error
             ? error.message
             : "An error occurred. Please try again."

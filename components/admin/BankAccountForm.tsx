@@ -20,6 +20,7 @@ import {
   createBankAccount,
   updateBankAccount,
 } from "@/app/admin/bank-accounts/actions";
+import { toast } from "sonner";
 
 interface BankAccountFormProps {
   account?: {
@@ -45,14 +46,16 @@ export function BankAccountForm({ account, onSuccess }: BankAccountFormProps) {
       try {
         if (isEdit) {
           await updateBankAccount(account.id, formData);
+          toast.success("Bank account updated successfully!");
         } else {
           await createBankAccount(formData);
+          toast.success("Bank account created successfully!");
         }
         setOpen(false);
         onSuccess?.();
       } catch (error) {
         console.error("Error:", error);
-        alert(
+        toast.error(
           error instanceof Error
             ? error.message
             : "An error occurred. Please try again."

@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteService } from "@/app/admin/services/actions";
+import { toast } from "sonner";
 
 interface DeleteServiceButtonProps {
   id: string;
@@ -34,11 +35,12 @@ export function DeleteServiceButton({
     startTransition(async () => {
       try {
         await deleteService(id);
+        toast.success("Service deleted successfully!");
         setOpen(false);
         onSuccess?.();
       } catch (error) {
         console.error("Error:", error);
-        alert(
+        toast.error(
           error instanceof Error ? error.message : "Failed to delete service"
         );
       }

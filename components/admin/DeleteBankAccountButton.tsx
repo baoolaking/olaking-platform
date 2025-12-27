@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { deleteBankAccount } from "@/app/admin/bank-accounts/actions";
+import { toast } from "sonner";
 
 interface DeleteBankAccountButtonProps {
   id: string;
@@ -34,11 +35,12 @@ export function DeleteBankAccountButton({
     startTransition(async () => {
       try {
         await deleteBankAccount(id);
+        toast.success("Bank account deleted successfully!");
         setOpen(false);
         onSuccess?.();
       } catch (error) {
         console.error("Error:", error);
-        alert(
+        toast.error(
           error instanceof Error
             ? error.message
             : "Failed to delete bank account"

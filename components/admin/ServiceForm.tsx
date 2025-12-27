@@ -26,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import { createService, updateService } from "@/app/admin/services/actions";
 import { Tables } from "@/types/database";
+import { toast } from "sonner";
 
 type Service = Tables<"services">;
 
@@ -102,10 +103,10 @@ export function ServiceForm({
   // Filter out already existing service types, but always include current service type when editing
   const availableServiceTypes = selectedPlatform
     ? (SERVICE_TYPES_BY_PLATFORM[selectedPlatform] || []).filter(
-        (type) =>
-          !existingServiceTypesForPlatform.includes(type.toLowerCase()) ||
-          (isEdit && type.toLowerCase() === service?.service_type.toLowerCase())
-      )
+      (type) =>
+        !existingServiceTypesForPlatform.includes(type.toLowerCase()) ||
+        (isEdit && type.toLowerCase() === service?.service_type.toLowerCase())
+    )
     : [];
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -119,14 +120,16 @@ export function ServiceForm({
       try {
         if (isEdit) {
           await updateService(service.id, formData);
+          toast.success("Service updated successfully!");
         } else {
           await createService(formData);
+          toast.success("Service created successfully!");
         }
         setOpen(false);
         onSuccess?.();
       } catch (error) {
         console.error("Error:", error);
-        alert(
+        toast.error(
           error instanceof Error
             ? error.message
             : "An error occurred. Please try again."

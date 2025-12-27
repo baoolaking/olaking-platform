@@ -25,6 +25,7 @@ import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { createUser, updateUser } from "@/app/admin/users/actions";
 import { Tables } from "@/types/database";
 import { PasswordInput } from "@/components/ui/password-input";
+import { toast } from "sonner";
 
 type User = Tables<"users">;
 
@@ -55,14 +56,16 @@ export function UserForm({ user, onSuccess, currentUserRole }: UserFormProps) {
       try {
         if (isEdit) {
           await updateUser(user.id, formData);
+          toast.success("User updated successfully!");
         } else {
           await createUser(formData);
+          toast.success("User created successfully!");
         }
         setOpen(false);
         onSuccess?.();
       } catch (error) {
         console.error("Error:", error);
-        alert(
+        toast.error(
           error instanceof Error
             ? error.message
             : "An error occurred. Please try again."

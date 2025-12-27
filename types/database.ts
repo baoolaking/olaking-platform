@@ -414,6 +414,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_admin_user: {
+        Args: {
+          p_auth_user_id: string
+          p_email: string
+          p_username: string
+          p_whatsapp_no: string
+          p_full_name: string
+          p_role?: Database["public"]["Enums"]["user_role"]
+          p_is_active?: boolean
+          p_bank_account_name?: string
+          p_bank_account_number?: string
+          p_bank_name?: string
+        }
+        Returns: boolean
+      }
       credit_wallet: {
         Args: {
           p_amount: number
