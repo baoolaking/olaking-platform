@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendWalletFundingNotification } from "@/lib/email/service";
+import { sendWalletFundingNotification, getActiveAdminEmails } from "@/lib/email/service";
 
 export async function POST(request: NextRequest) {
   try {
     const { testEmail } = await request.json();
+
+    console.log("🧪 Testing email service");
+
+    let adminEmails: string[];
     
-    if (!testEmail) {
-      return NextResponse.json({ error: "Test email address required" }, { status: 400 });
+    if (testEmail) {
+      // Use provided test email
+      adminEmails = [testEmail];
+      console.log("Using provided test email:", testEmail);
+    } else {
+      // Use actual admin emails from database
+      adminEmails = await getActiveAdminEmails();
+      console.log("Using active admin emails:", adminEmails);
     }
 
-    console.log("🧪 Testing email service with:", testEmail);
+    if (adminEmails.length === 0) {
+      return NextResponse.json({ 
+        error: "No admin emails found and no test email provided" 
+      }, { status: 400 });
+    }
 
     // Test the email service
     await sendWalletFundingNotification({
@@ -17,13 +31,13 @@ export async function POST(request: NextRequest) {
       userEmail: "test-user@example.com",
       userName: "Test User",
       amount: 5000,
-      adminEmail: testEmail,
+      adminEmails,
     });
 
     return NextResponse.json({
       success: true,
       message: "Test email sent successfully",
-      testEmail,
+      adminEmails,
       timestamp: new Date().toISOString()
     });
 
@@ -38,21 +52,36 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  // Check email service configuration
-  const resendApiKey = process.env.RESEND_API_KEY;
-  const adminEmail = process.env.RESEND_ADMIN_EMAIL;
-  const fromEmail = process.env.RESEND_FROM_EMAIL;
+  try {
+    // Check email service configuration
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const adminEmail = process.env.RESEND_ADMIN_EMAIL;
+    const fromEmail = process.env.RESEND_FROM_EMAIL;
+    
+    // Get active admin emails from database
+    const activeAdminEmails = await getActiveAdminEmails();
 
-  return NextResponse.json({
-    configured: {
-      resendApiKey: !!resendApiKey,
-      adminEmail: !!adminEmail,
-      fromEmail: !!fromEmail
-    },
-    values: {
-      adminEmail: adminEmail || "Not set",
-      fromEmail: fromEmail || "Not set",
-      apiKeyLength: resendApiKey ? resendApiKey.length : 0
-    }
-  });
+    return NextResponse.json({
+      configured: {
+        resendApiKey: !!resendApiKey,
+        adminEmail: !!adminEmail,
+        fromEmail: !!fromEmail
+      },
+      values: {
+        adminEmail: adminEmail || "Not set",
+        fromEmail: fromEmail || "Not set",
+        apiKeyLength: resendApiKey ? resendApiKey.length : 0
+      },
+      activeAdminEmails: {
+        count: activeAdminEmails.length,
+        emails: activeAdminEmails
+      }
+    });
+  } catch (error) {
+    console.error("Error getting email configuration:", error);
+    return NextResponse.json({
+      error: "Failed to get email configuration",
+      details: error instanceof Error ? error.message : "Unknown error"
+    }, { status: 500 });
+  }
 }

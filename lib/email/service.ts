@@ -5,6 +5,7 @@
 
 export interface EmailPayload {
   to: string;
+  cc?: string[];
   subject: string;
   html: string;
   from?: string;
@@ -22,6 +23,9 @@ class ConsoleEmailService implements EmailService {
   async sendEmail(payload: EmailPayload): Promise<void> {
     console.log("📧 Email would be sent:");
     console.log("To:", payload.to);
+    if (payload.cc && payload.cc.length > 0) {
+      console.log("CC:", payload.cc.join(", "));
+    }
     console.log("Subject:", payload.subject);
     console.log("From:", payload.from || "noreply@example.com");
     console.log("HTML Content:", payload.html);
@@ -39,18 +43,25 @@ class ResendEmailService implements EmailService {
   }
   
   async sendEmail(payload: EmailPayload): Promise<void> {
+    const emailData: any = {
+      from: payload.from || 'noreply@example.com',
+      to: [payload.to],
+      subject: payload.subject,
+      html: payload.html,
+    };
+    
+    // Add CC if provided
+    if (payload.cc && payload.cc.length > 0) {
+      emailData.cc = payload.cc;
+    }
+    
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: payload.from || 'noreply@example.com',
-        to: [payload.to],
-        subject: payload.subject,
-        html: payload.html,
-      }),
+      body: JSON.stringify(emailData),
     });
     
     if (!response.ok) {
@@ -81,6 +92,46 @@ export function getEmailService(): EmailService {
 }
 
 /**
+ * Get all active admin email addresses from the database
+ * Uses a secure database function that runs with elevated privileges
+ */
+export async function getActiveAdminEmails(): Promise<string[]> {
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    
+    // Use the database function to get admin emails
+    const { data, error } = await supabase.rpc('get_active_admin_emails');
+    
+    if (error) {
+      console.error("❌ Error fetching admin emails via RPC:", error);
+      // Fallback to environment variable if database query fails
+      const fallbackEmail = process.env.RESEND_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
+      return fallbackEmail ? [fallbackEmail] : [];
+    }
+    
+    const adminEmails = data || [];
+    
+    // If no admins found in database, fallback to environment variable
+    if (adminEmails.length === 0) {
+      const fallbackEmail = process.env.RESEND_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
+      if (fallbackEmail) {
+        console.log("⚠️ No active admins found in database, using fallback email:", fallbackEmail);
+        return [fallbackEmail];
+      }
+    }
+    
+    console.log(`📧 Found ${adminEmails.length} active admin email(s):`, adminEmails);
+    return adminEmails;
+  } catch (error) {
+    console.error("❌ Error in getActiveAdminEmails:", error);
+    // Fallback to environment variable if any error occurs
+    const fallbackEmail = process.env.RESEND_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
+    return fallbackEmail ? [fallbackEmail] : [];
+  }
+}
+
+/**
  * Send admin notification email for service order payment confirmation
  */
 export async function sendServiceOrderNotification({
@@ -89,14 +140,14 @@ export async function sendServiceOrderNotification({
   userName,
   amount,
   serviceName,
-  adminEmail,
+  adminEmails,
 }: {
   orderId: string;
   userEmail: string;
   userName: string;
   amount: number;
   serviceName: string;
-  adminEmail: string;
+  adminEmails: string[];
 }) {
   const emailService = getEmailService();
   
@@ -162,12 +213,19 @@ export async function sendServiceOrderNotification({
     </html>
   `;
   
-  await emailService.sendEmail({
-    to: adminEmail,
-    subject,
-    html,
-    from: process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL || "noreply@example.com",
-  });
+  // Send email to primary admin and CC to all other admins
+  if (adminEmails.length > 0) {
+    const primaryAdmin = adminEmails[0];
+    const ccEmails = adminEmails.slice(1);
+    
+    await emailService.sendEmail({
+      to: primaryAdmin,
+      cc: ccEmails,
+      subject,
+      html,
+      from: process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL || "noreply@example.com",
+    });
+  }
 }
 
 /**
@@ -178,13 +236,13 @@ export async function sendWalletFundingNotification({
   userEmail,
   userName,
   amount,
-  adminEmail,
+  adminEmails,
 }: {
   orderId: string;
   userEmail: string;
   userName: string;
   amount: number;
-  adminEmail: string;
+  adminEmails: string[];
 }) {
   const emailService = getEmailService();
   
@@ -249,10 +307,17 @@ export async function sendWalletFundingNotification({
     </html>
   `;
   
-  await emailService.sendEmail({
-    to: adminEmail,
-    subject,
-    html,
-    from: process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL || "noreply@example.com",
-  });
+  // Send email to primary admin and CC to all other admins
+  if (adminEmails.length > 0) {
+    const primaryAdmin = adminEmails[0];
+    const ccEmails = adminEmails.slice(1);
+    
+    await emailService.sendEmail({
+      to: primaryAdmin,
+      cc: ccEmails,
+      subject,
+      html,
+      from: process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL || "noreply@example.com",
+    });
+  }
 }

@@ -91,13 +91,14 @@ export function useWalletFunding(userData: UserData | null, onDataReload: () => 
 
       if (error) throw error;
 
-      if (orderData.status === "pending" && orderData.payment_verified_at) {
-        // Payment approved, reload wallet data
-        await onDataReload();
+      if (orderData.status === "pending") {
+        // Order moved to pending (either manually by admin or auto-timeout)
+        // Stop polling and hide waiting state, but keep showing the order in orders page
+        await onDataReload(); // Refresh wallet data to show any new transactions
         setPendingPayment(null);
         setIsPolling(false);
         setIsConfirmed(false);
-        toast.success("Payment confirmed! Your wallet has been funded.");
+        toast.success("Payment moved to pending! Admin will verify and credit your wallet soon.");
       } else if (orderData.status === "completed") {
         // Payment completed, reload wallet data
         await onDataReload();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { sendWalletFundingNotification, sendServiceOrderNotification } from "@/lib/email/service";
+import { sendWalletFundingNotification, sendServiceOrderNotification, getActiveAdminEmails } from "@/lib/email/service";
 
 export async function POST(request: NextRequest) {
   console.log("🔍 Order payment confirmation API called");
@@ -116,35 +116,39 @@ export async function POST(request: NextRequest) {
       // Don't fail the request if we can't get user data for email
     }
 
-    // Send email notification to admin
+    // Send email notification to all active admins
     try {
-      const adminEmail = process.env.RESEND_ADMIN_EMAIL || process.env.ADMIN_EMAIL || "admin@example.com";
-      console.log("📧 Sending email to admin:", adminEmail);
+      const adminEmails = await getActiveAdminEmails();
+      console.log("📧 Sending email to admin(s):", adminEmails);
       
-      const isWalletFunding = order.link === "wallet_funding";
-      
-      if (isWalletFunding) {
-        // Use existing wallet funding notification
-        await sendWalletFundingNotification({
-          orderId: order.id,
-          userEmail: userData?.email || "Unknown",
-          userName: userData?.full_name || "Unknown User",
-          amount: order.total_price,
-          adminEmail,
-        });
+      if (adminEmails.length === 0) {
+        console.log("⚠️ No admin emails found, skipping email notification");
       } else {
-        // Send service order notification
-        await sendServiceOrderNotification({
-          orderId: order.id,
-          userEmail: userData?.email || "Unknown",
-          userName: userData?.full_name || "Unknown User",
-          amount: order.total_price,
-          serviceName: `${order.services?.[0]?.platform || 'Unknown'} ${order.services?.[0]?.service_type || 'Service'}`,
-          adminEmail,
-        });
+        const isWalletFunding = order.link === "wallet_funding";
+        
+        if (isWalletFunding) {
+          // Use existing wallet funding notification
+          await sendWalletFundingNotification({
+            orderId: order.id,
+            userEmail: userData?.email || "Unknown",
+            userName: userData?.full_name || "Unknown User",
+            amount: order.total_price,
+            adminEmails,
+          });
+        } else {
+          // Send service order notification
+          await sendServiceOrderNotification({
+            orderId: order.id,
+            userEmail: userData?.email || "Unknown",
+            userName: userData?.full_name || "Unknown User",
+            amount: order.total_price,
+            serviceName: `${order.services?.[0]?.platform || 'Unknown'} ${order.services?.[0]?.service_type || 'Service'}`,
+            adminEmails,
+          });
+        }
+        
+        console.log("✅ Email notification sent successfully to all admins");
       }
-      
-      console.log("✅ Email notification sent successfully");
     } catch (emailError) {
       console.error("⚠️ Failed to send admin notification email:", emailError);
       // Don't fail the request if email fails

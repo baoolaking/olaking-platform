@@ -64,6 +64,7 @@ export function PaymentWaitingState({
       const response = await fetch(`/api/orders/${orderId}/status`);
       if (response.ok) {
         const data = await response.json();
+        // Stop polling if status changes from awaiting_confirmation to any other status
         if (data.status !== 'awaiting_confirmation') {
           console.log(`Wallet funding order ${orderId} status changed to ${data.status}, stopping polling`);
           cleanup();
@@ -97,7 +98,7 @@ export function PaymentWaitingState({
       });
 
       if (response.ok) {
-        toast.success("Payment verified! Your wallet has been credited.");
+        toast.success("Payment moved to pending! Admin will verify and credit your wallet soon.");
         cleanup();
         onRefresh?.();
       } else {
@@ -154,9 +155,9 @@ export function PaymentWaitingState({
 
   const getEstimatedTime = () => {
     const remaining = Math.max(0, maxWaitTime - timeElapsed);
-    if (remaining > 30) return `Auto-crediting in ~${Math.ceil(remaining / 10) * 10}s`;
-    if (remaining > 0) return `Auto-crediting in ${remaining}s`;
-    return "Crediting wallet automatically...";
+    if (remaining > 30) return `Auto-processing in ~${Math.ceil(remaining / 10) * 10}s`;
+    if (remaining > 0) return `Auto-processing in ${remaining}s`;
+    return "Processing automatically...";
   };
 
   const getProgressColor = () => {
@@ -275,8 +276,8 @@ export function PaymentWaitingState({
             <li className="flex items-start">
               <div className={`w-2 h-2 ${isAutoUpdating ? 'bg-green-500' : 'bg-gray-400'} rounded-full mt-2 mr-2 flex-shrink-0`}></div>
               {isAutoUpdating
-                ? "Auto-crediting your wallet now"
-                : `Auto-crediting in ${Math.max(0, maxWaitTime - timeElapsed)}s if not manually verified`
+                ? "Auto-processing your order now"
+                : `Auto-processing in ${Math.max(0, maxWaitTime - timeElapsed)}s if not manually verified`
               }
             </li>
           </ul>
@@ -345,10 +346,10 @@ export function PaymentWaitingState({
               <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                  Auto-crediting initiated!
+                  Auto-processing initiated!
                 </p>
                 <p className="text-xs text-green-600 dark:text-green-300 mt-1">
-                  Your wallet is being automatically credited. You'll be notified once complete.
+                  Your order is being automatically processed. Admin will verify and credit your wallet.
                 </p>
               </div>
             </div>

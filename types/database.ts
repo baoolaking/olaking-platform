@@ -429,6 +429,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_pending_wallet_transaction: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_order_id: string
+          p_description?: string
+        }
+        Returns: boolean
+      }
       credit_wallet: {
         Args: {
           p_amount: number
@@ -447,6 +456,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      get_active_admin_emails: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
       }
       get_email_by_identifier: {
         Args: { p_identifier: string }

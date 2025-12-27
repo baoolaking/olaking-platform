@@ -95,7 +95,7 @@ export function AwaitingConfirmationSection({
       });
 
       if (response.ok) {
-        toast.success("Payment verified! Your order is now being processed.");
+        toast.success("Order moved to pending! Admin will verify and process it soon.");
         cleanup();
         onRefresh?.();
       } else {

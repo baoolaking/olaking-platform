@@ -68,7 +68,7 @@ export async function POST(
       .update({ 
         status: status,
         admin_notes: reason === 'auto_confirmation_timeout' 
-          ? 'Automatically processed after confirmation timeout' 
+          ? 'Automatically moved to pending after confirmation timeout' 
           : null,
         updated_at: new Date().toISOString()
       })
@@ -82,51 +82,35 @@ export async function POST(
       );
     }
 
-    // Handle wallet funding - credit the user's wallet
+    // For wallet funding orders moving to pending, create a transaction record
+    // This shows the funding request in the user's transaction history
     if (order.link === "wallet_funding" && status === "pending") {
       try {
-        // Credit wallet using the existing wallet credit function
-        const { error: creditError } = await supabase.rpc('credit_wallet', {
-          user_id: user.id,
-          amount: order.total_price
-        });
-
-        if (creditError) {
-          console.error("Error crediting wallet:", creditError);
-          // Revert order status if wallet credit fails
-          await supabase
-            .from("orders")
-            .update({ 
-              status: "awaiting_confirmation",
-              admin_notes: "Auto-processing failed: wallet credit error",
-              updated_at: new Date().toISOString()
-            })
-            .eq("id", orderId);
-          
-          return NextResponse.json(
-            { error: "Failed to credit wallet" },
-            { status: 500 }
-          );
-        }
-
-        // Update order to completed for wallet funding
-        await supabase
-          .from("orders")
-          .update({ 
-            status: "completed",
-            completed_at: new Date().toISOString(),
-            admin_notes: "Automatically processed and wallet credited",
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", orderId);
-
-        console.log(`Wallet funding order ${orderId} auto-completed and credited ₦${order.total_price}`);
-      } catch (walletError) {
-        console.error("Wallet credit error:", walletError);
-        return NextResponse.json(
-          { error: "Failed to process wallet funding" },
-          { status: 500 }
+        console.log(`Creating transaction record for wallet funding order ${order.id} moving to pending`);
+        
+        // Use database function to create pending transaction record
+        // This function runs with elevated privileges to bypass RLS
+        const { data: transactionCreated, error: transactionError } = await supabase.rpc(
+          'create_pending_wallet_transaction',
+          {
+            p_user_id: user.id,
+            p_amount: order.total_price,
+            p_order_id: order.id,
+            p_description: `Wallet funding pending admin verification - Order ${order.id.slice(0, 8)}`
+          }
         );
+
+        if (transactionError) {
+          console.error("Error creating pending transaction record:", transactionError);
+          // Don't fail the request if transaction creation fails
+        } else if (transactionCreated) {
+          console.log(`✅ Pending transaction record created for wallet funding order ${order.id}`);
+        } else {
+          console.log(`⚠️ Pending transaction creation returned false for order ${order.id}`);
+        }
+      } catch (transactionCreationError) {
+        console.error("Error in pending transaction creation:", transactionCreationError);
+        // Don't fail the request if transaction creation fails
       }
     }
 
@@ -141,7 +125,7 @@ export async function POST(
       success: true,
       message: `Order automatically updated to ${status}`,
       orderId,
-      newStatus: order.link === "wallet_funding" && status === "pending" ? "completed" : status
+      newStatus: status
     });
   } catch (error) {
     console.error("Auto-update error:", error);

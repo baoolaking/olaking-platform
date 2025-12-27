@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { sendWalletFundingNotification } from "@/lib/email/service";
+import { sendWalletFundingNotification, getActiveAdminEmails } from "@/lib/email/service";
 
 export async function POST(request: NextRequest) {
   console.log("🔍 Payment confirmation API called");
@@ -114,20 +114,24 @@ export async function POST(request: NextRequest) {
       // Don't fail the request if we can't get user data for email
     }
 
-    // Send email notification to admin
+    // Send email notification to all active admins
     try {
-      const adminEmail = process.env.RESEND_ADMIN_EMAIL || process.env.ADMIN_EMAIL || "admin@example.com";
-      console.log("📧 Sending email to admin:", adminEmail);
+      const adminEmails = await getActiveAdminEmails();
+      console.log("📧 Sending email to admin(s):", adminEmails);
       
-      await sendWalletFundingNotification({
-        orderId: order.id,
-        userEmail: userData?.email || "Unknown",
-        userName: userData?.full_name || "Unknown User",
-        amount: order.total_price,
-        adminEmail,
-      });
-      
-      console.log("✅ Email notification sent successfully");
+      if (adminEmails.length === 0) {
+        console.log("⚠️ No admin emails found, skipping email notification");
+      } else {
+        await sendWalletFundingNotification({
+          orderId: order.id,
+          userEmail: userData?.email || "Unknown",
+          userName: userData?.full_name || "Unknown User",
+          amount: order.total_price,
+          adminEmails,
+        });
+        
+        console.log("✅ Email notification sent successfully to all admins");
+      }
     } catch (emailError) {
       console.error("⚠️ Failed to send admin notification email:", emailError);
       // Don't fail the request if email fails
