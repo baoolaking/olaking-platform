@@ -34,6 +34,19 @@ const ALL_PLATFORMS = [
 ] as const;
 
 export function PlatformTabs({ services, onServiceSelect, searchTerm }: PlatformTabsProps) {
+  // Create hardcoded TikTok Coins service
+  const tiktokCoinsService: Service = {
+    id: "tiktok-coins-hardcoded",
+    platform: "tiktok",
+    service_type: "coins_purchase",
+    price_per_1k: 0, // Not used for this special service
+    is_active: true,
+    min_quantity: 1,
+    max_quantity: 1,
+    delivery_time: "Instant",
+    description: "Purchase TikTok coins directly through WhatsApp support"
+  };
+
   // Show all platforms from enum, not just those with services
   const platforms = ALL_PLATFORMS.filter(platform => {
     // If there's a search term, filter platforms that match or have matching services
@@ -44,7 +57,12 @@ export function PlatformTabs({ services, onServiceSelect, searchTerm }: Platform
         (formatPlatformName(service.platform).toLowerCase().includes(searchTerm.toLowerCase()) ||
           formatServiceType(service.service_type).toLowerCase().includes(searchTerm.toLowerCase()))
       );
-      return platformMatches || hasMatchingServices;
+      // Also check if TikTok coins matches the search for TikTok platform
+      const coinsMatches = platform === "tiktok" &&
+        ("coins".toLowerCase().includes(searchTerm.toLowerCase()) ||
+          "purchase".toLowerCase().includes(searchTerm.toLowerCase()) ||
+          "tiktok coins".toLowerCase().includes(searchTerm.toLowerCase()));
+      return platformMatches || hasMatchingServices || coinsMatches;
     }
     return true;
   });
@@ -58,6 +76,20 @@ export function PlatformTabs({ services, onServiceSelect, searchTerm }: Platform
   // Group services by platform (including empty arrays for platforms with no services)
   const servicesByPlatform = platforms.reduce((acc, platform) => {
     acc[platform] = filteredServices.filter(service => service.platform === platform);
+
+    // Add hardcoded TikTok coins service to TikTok platform if it matches search
+    if (platform === "tiktok") {
+      const coinsMatchesSearch = !searchTerm ||
+        "coins".toLowerCase().includes(searchTerm.toLowerCase()) ||
+        "purchase".toLowerCase().includes(searchTerm.toLowerCase()) ||
+        "tiktok coins".toLowerCase().includes(searchTerm.toLowerCase()) ||
+        formatPlatformName("tiktok").toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (coinsMatchesSearch) {
+        acc[platform] = [tiktokCoinsService, ...acc[platform]];
+      }
+    }
+
     return acc;
   }, {} as Record<string, Service[]>);
 

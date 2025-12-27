@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, MessageCircle } from "lucide-react";
 import { formatPlatformName, formatServiceType } from "@/lib/validations/wallet";
 import { formatCurrency } from "@/lib/wallet/utils";
 import { Service } from "./types";
@@ -20,16 +20,46 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ service, onSelect }: ServiceCardProps) {
+  // Special handling for TikTok coins purchase
+  const isTikTokCoins = service.id === "tiktok-coins-hardcoded";
+
+  const handleClick = () => {
+    if (isTikTokCoins) {
+      // Create WhatsApp link for TikTok coins purchase
+      const whatsappNumber1 = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER_1;
+      const whatsappNumber2 = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER_2;
+      const defaultNumber = whatsappNumber1 || whatsappNumber2 || "+2349017992518";
+
+      const message = encodeURIComponent(
+        "Hi! I'm interested in purchasing TikTok coins. Can you help me with the available packages and pricing?"
+      );
+      const whatsappUrl = `https://wa.me/${defaultNumber.replace('+', '')}?text=${message}`;
+
+      // Open WhatsApp in new tab
+      window.open(whatsappUrl, '_blank');
+    } else {
+      // Normal service selection
+      onSelect(service);
+    }
+  };
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md gap-3 transition-shadow">
       <CardHeader>
         <div className="flex items-center justify-between">
           <Badge variant="secondary">
             {formatPlatformName(service.platform)}
           </Badge>
-          <Badge variant="outline">
-            {formatCurrency(service.price_per_1k)}/1k
-          </Badge>
+          {!isTikTokCoins && (
+            <Badge variant="outline">
+              {formatCurrency(service.price_per_1k)}/1k
+            </Badge>
+          )}
+          {isTikTokCoins && (
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              WhatsApp
+            </Badge>
+          )}
         </div>
         <CardTitle className="text-lg">
           {formatServiceType(service.service_type)}
@@ -38,27 +68,18 @@ export function ServiceCard({ service, onSelect }: ServiceCardProps) {
           {service.description || `Get ${formatServiceType(service.service_type).toLowerCase()} for your ${formatPlatformName(service.platform)} content`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-muted-foreground">Min Quantity</p>
-            <p className="font-medium">{service.min_quantity.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Max Quantity</p>
-            <p className="font-medium">{service.max_quantity.toLocaleString()}</p>
-          </div>
-          <div className="col-span-2">
-            <p className="text-muted-foreground">Delivery Time</p>
-            <p className="font-medium">{service.delivery_time}</p>
-          </div>
-        </div>
+      <CardContent>
         <Button
           className="w-full"
-          onClick={() => onSelect(service)}
+          onClick={handleClick}
+          variant={isTikTokCoins ? "default" : "default"}
         >
-          <ShoppingBag className="mr-2 h-4 w-4" />
-          Order Now
+          {isTikTokCoins ? (
+            <MessageCircle className="mr-2 h-4 w-4" />
+          ) : (
+            <ShoppingBag className="mr-2 h-4 w-4" />
+          )}
+          {isTikTokCoins ? "Contact via WhatsApp" : "Order Now"}
         </Button>
       </CardContent>
     </Card>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ConfirmSignOutButton } from "@/components/common/ConfirmSignOutButton";
 import { Button } from "@/components/ui/button";
@@ -63,16 +64,18 @@ export function DashboardHeader({
         </div>
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {displayBalance !== undefined && (
-            <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-primary/10 border border-primary/20">
-              {isUpdating ? (
-                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary animate-spin" />
-              ) : (
-                <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-              )}
-              <span className="text-xs sm:text-sm font-semibold">
-                ₦{displayBalance.toLocaleString()}
-              </span>
-            </div>
+            <Link href="/dashboard/wallet" title="Go to Wallet">
+              <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 hover:scale-105 transition-all cursor-pointer">
+                {isUpdating ? (
+                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary animate-spin" />
+                ) : (
+                  <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                )}
+                <span className="text-xs sm:text-sm font-semibold">
+                  ₦{displayBalance.toLocaleString()}
+                </span>
+              </div>
+            </Link>
           )}
           <ThemeToggle />
           <ConfirmSignOutButton hideLabelOnMobile />

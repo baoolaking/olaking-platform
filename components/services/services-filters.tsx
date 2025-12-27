@@ -14,8 +14,8 @@ export function ServicesFilters({
   onSearchChange,
 }: ServicesFiltersProps) {
   return (
-    <Card>
-      <CardContent className="p-4">
+    <Card className="py-2 px-0">
+      <CardContent className="py-0 px-2">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input

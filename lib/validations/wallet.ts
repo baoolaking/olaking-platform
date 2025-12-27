@@ -26,8 +26,8 @@ export const serviceOrderSchema = z.object({
     .max(500000, "Maximum quantity is 500,000"),
   link: z.string().url("Please enter a valid URL"),
   quality_type: z.enum(["high_quality", "low_quality"]),
-  payment_method: z.enum(["wallet", "bank_transfer"]),
-  bank_account_id: z.string().optional(),
+  payment_method: z.enum(["wallet", "bank_transfer"]), // Currently only wallet is supported
+  bank_account_id: z.string().optional(), // Not required since only wallet payments are supported
 });
 
 export const adminWalletActionSchema = z.object({
@@ -50,7 +50,8 @@ export const platformServiceTypes = {
     "video_views",
     "video_shares",
     "custom_comments",
-    "video_saves"
+    "video_saves",
+    "coins_purchase"
   ],
   instagram: [
     "followers",

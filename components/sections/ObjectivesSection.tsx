@@ -22,7 +22,7 @@ const objectives = [
       "Grow your presence on TikTok, Instagram, Facebook, YouTube, X, and more",
     icon: TrendingUp,
     color: "from-primary/20 to-primary/10",
-    route: "/services",
+    route: "/dashboard/services",
     isInternal: true,
   },
   {

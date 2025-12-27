@@ -51,7 +51,7 @@ export function HeroSection() {
           </p>
 
           <div className="flex flex-wrap gap-4">
-            <Link href="/services">
+            <Link href="/dashboard/services">
               <Button
                 size="lg"
                 className="bg-primary hover:bg-primary/90 group"

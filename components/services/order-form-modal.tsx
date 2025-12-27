@@ -93,7 +93,8 @@ export function OrderFormModal({
       service_type: service.service_type,
       quantity: service.min_quantity,
       quality_type: "high_quality",
-      payment_method: userData && displayBalance > 0 ? "wallet" : "bank_transfer",
+      payment_method: "wallet", // Only wallet payment supported for now
+      // payment_method: userData && displayBalance > 0 ? "wallet" : "bank_transfer",
     }
   });
 
@@ -129,13 +130,15 @@ export function OrderFormModal({
     if (data.payment_method === "wallet") {
       const hasSufficientBalance = displayBalance >= totalPrice;
       if (!hasSufficientBalance) {
-        toast.error("Insufficient wallet balance. Please fund your wallet or choose bank transfer.");
+        toast.error("Insufficient wallet balance. Please fund your wallet first.");
         return;
       }
-    } else if (data.payment_method === "bank_transfer" && !data.bank_account_id) {
-      toast.error("Please select a bank account for payment.");
-      return;
     }
+    // Bank transfer temporarily disabled - only wallet payments supported
+    // else if (data.payment_method === "bank_transfer" && !data.bank_account_id) {
+    //   toast.error("Please select a bank account for payment.");
+    //   return;
+    // }
 
     setIsOrdering(true);
 
@@ -156,7 +159,7 @@ export function OrderFormModal({
           quantity: data.quantity,
           price_per_1k: service.price_per_1k,
           total_price: totalPrice,
-          status: data.payment_method === "wallet" ? "pending" : "awaiting_payment",
+          status: data.payment_method === "wallet" ? "pending" : "awaiting_payment", // Only wallet supported for now
           link: data.link,
           quality_type: data.quality_type,
           payment_method: data.payment_method,
@@ -205,11 +208,14 @@ export function OrderFormModal({
         toast.success("Order placed successfully! Payment deducted from wallet.", {
           icon: <CheckCircle2 className="h-5 w-5" />,
         });
-      } else {
-        toast.success("Order created! Please make the payment to complete your order.", {
-          icon: <CheckCircle2 className="h-5 w-5" />,
-        });
       }
+
+      // Bank transfer success message (commented out since only wallet is supported)
+      // else {
+      //   toast.success("Order created! Please make the payment to complete your order.", {
+      //     icon: <CheckCircle2 className="h-5 w-5" />,
+      //   });
+      // }
 
       // Trigger a page refresh to update wallet balance and other data
       onRefreshUserData();
@@ -313,15 +319,15 @@ export function OrderFormModal({
               <div className="space-y-2">
                 <Label htmlFor="payment_method">Payment Method</Label>
                 <Select
-                  value={watchedPaymentMethod || (userData && userData.wallet_balance > 0 ? "wallet" : "bank_transfer")}
+                  value="wallet" // Only wallet payment supported for now
                   onValueChange={(value) => setValue("payment_method", value as "wallet" | "bank_transfer")}
-                  disabled={isOrdering}
+                  disabled={true} // Disabled since only wallet is supported
                 >
                   <SelectTrigger className="text-left">
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent className="z-50">
-                    {userData && displayBalance > 0 && (
+                    {userData && displayBalance >= 0 && (
                       <SelectItem value="wallet">
                         <div className="flex flex-col">
                           <span>Wallet {isOptimistic && "(updating...)"}</span>
@@ -331,13 +337,18 @@ export function OrderFormModal({
                         </div>
                       </SelectItem>
                     )}
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    {/* Bank transfer temporarily disabled */}
+                    {/* <SelectItem value="bank_transfer">Bank Transfer</SelectItem> */}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  Only wallet payments are currently supported
+                </p>
               </div>
             </div>
 
-            {watchedPaymentMethod === "bank_transfer" && (
+            {/* Bank transfer section temporarily disabled - only wallet payments supported */}
+            {/* {watchedPaymentMethod === "bank_transfer" && (
               <div className="space-y-2">
                 <Label htmlFor="bank_account_id">Select Bank Account</Label>
                 <Select
@@ -369,7 +380,7 @@ export function OrderFormModal({
                   </p>
                 )}
               </div>
-            )}
+            )} */}
 
             {/* Price Display */}
             {watchedQuantity && (
