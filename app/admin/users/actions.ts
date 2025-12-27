@@ -125,9 +125,9 @@ export async function createUser(formData: FormData) {
       p_full_name: full_name,
       p_role: role,
       p_is_active: is_active,
-      p_bank_account_name: bank_account_name || null,
-      p_bank_account_number: bank_account_number || null,
-      p_bank_name: bank_name || null,
+      p_bank_account_name: bank_account_name || undefined,
+      p_bank_account_number: bank_account_number || undefined,
+      p_bank_name: bank_name || undefined,
     });
 
   if (createUserError) {
