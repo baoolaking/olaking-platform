@@ -49,6 +49,40 @@ export async function createUser(formData: FormData) {
     throw new Error("You don't have permission to create admin accounts");
   }
 
+  // Check if email already exists
+  const { data: existingUser } = await adminClient.auth.admin.listUsers();
+  const emailExists = existingUser.users.some(user => user.email === email);
+  
+  if (emailExists) {
+    throw new Error("A user with this email already exists");
+  }
+
+  // Check if username is already taken using database function
+  const { data: usernameCheck, error: usernameError } = await adminClient
+    .rpc('is_username_taken', { p_username: username });
+
+  if (usernameError) {
+    console.error("Error checking username:", usernameError);
+    throw new Error("Failed to validate username");
+  }
+
+  if (usernameCheck) {
+    throw new Error("Username is already taken");
+  }
+
+  // Check if WhatsApp number is already taken using database function
+  const { data: whatsappCheck, error: whatsappError } = await adminClient
+    .rpc('is_whatsapp_taken', { p_whatsapp: whatsapp_no });
+
+  if (whatsappError) {
+    console.error("Error checking WhatsApp:", whatsappError);
+    throw new Error("Failed to validate WhatsApp number");
+  }
+
+  if (whatsappCheck) {
+    throw new Error("WhatsApp number is already registered");
+  }
+
   // Create user with Supabase Admin API (doesn't create a session)
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
     email,
@@ -63,51 +97,42 @@ export async function createUser(formData: FormData) {
 
   if (authError) {
     console.error("Error creating auth user:", authError);
-    throw new Error(authError.message);
+    
+    // Provide more specific error messages
+    if (authError.message.includes('already registered')) {
+      throw new Error("A user with this email is already registered");
+    } else if (authError.message.includes('invalid email')) {
+      throw new Error("Please provide a valid email address");
+    } else if (authError.message.includes('password')) {
+      throw new Error("Password does not meet requirements");
+    } else {
+      throw new Error(`Failed to create user: ${authError.message}`);
+    }
   }
 
   if (!authData.user) {
     throw new Error("Failed to create user");
   }
 
-  const newUserData = {
-    id: authData.user.id,
-    email,
-    username,
-    whatsapp_no,
-    full_name,
-    role,
-    is_active,
-    bank_account_name: bank_account_name || null,
-    bank_account_number: bank_account_number || null,
-    bank_name: bank_name || null,
-    wallet_balance: 0,
-  };
+  // The handle_new_user() trigger should have created a basic user record
+  // Use our custom function to properly set up the user with admin fields
+  const { data: createResult, error: createUserError } = await adminClient
+    .rpc('create_admin_user', {
+      p_auth_user_id: authData.user.id,
+      p_email: email,
+      p_username: username,
+      p_whatsapp_no: whatsapp_no,
+      p_full_name: full_name,
+      p_role: role,
+      p_is_active: is_active,
+      p_bank_account_name: bank_account_name || null,
+      p_bank_account_number: bank_account_number || null,
+      p_bank_name: bank_name || null,
+    });
 
-  // Insert into public users table (trigger may not fire with admin.createUser)
-  const { error: insertError } = await adminClient
-    .from("users")
-    .insert(newUserData);
-
-  if (insertError) {
-    console.error("Error inserting user data:", insertError);
-    // If insert fails, try update (in case trigger did fire)
-    const { error: updateError } = await adminClient
-      .from("users")
-      .update({
-        role,
-        is_active,
-        bank_account_name: bank_account_name || null,
-        bank_account_number: bank_account_number || null,
-        bank_name: bank_name || null,
-        wallet_balance: 0,
-      })
-      .eq("id", authData.user.id);
-
-    if (updateError) {
-      console.error("Error updating user data:", updateError);
-      throw new Error(updateError.message);
-    }
+  if (createUserError) {
+    console.error("Error creating user profile:", createUserError);
+    throw new Error(createUserError.message);
   }
 
   // Log the admin action
@@ -115,7 +140,17 @@ export async function createUser(formData: FormData) {
     action: "CREATE_USER",
     entityType: "user",
     entityId: authData.user.id,
-    newValues: await extractAuditFields(newUserData, [
+    newValues: await extractAuditFields({
+      email,
+      username,
+      whatsapp_no,
+      full_name,
+      role,
+      is_active,
+      bank_account_name: bank_account_name || null,
+      bank_account_number: bank_account_number || null,
+      bank_name: bank_name || null,
+    }, [
       "email",
       "username",
       "whatsapp_no",
