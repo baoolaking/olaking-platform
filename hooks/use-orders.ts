@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 type OrderStatus =
   | "awaiting_payment"
+  | "awaiting_confirmation"
   | "pending"
   | "completed"
   | "failed"
@@ -15,6 +16,7 @@ type OrderStatus =
 
 export interface Order {
   id: string;
+  order_number: string;
   user_id: string;
   service_id: string | null;
   quantity: number;

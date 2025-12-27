@@ -15,8 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, XCircle, Lock, Eye, EyeOff } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Lock } from "lucide-react";
 import { changePasswordSchema, type ChangePasswordInput } from "@/lib/validations/auth";
+import { PasswordInput } from "@/components/ui/password-input";
 
 interface PasswordChangeFormProps {
   userEmail: string;
@@ -101,27 +102,14 @@ export function PasswordChangeForm({
           <div className="grid gap-4 md:grid-cols-1 max-w-md">
             <div className="space-y-2">
               <Label htmlFor="currentPassword">Current Password</Label>
-              <div className="relative">
-                <Input
-                  id="currentPassword"
-                  type={showCurrentPassword ? "text" : "password"}
-                  placeholder="Enter your current password"
-                  {...register("currentPassword")}
-                  disabled={isChangingPassword}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showCurrentPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
+              <PasswordInput
+                id="currentPassword"
+                placeholder="Enter your current password"
+                showPassword={showCurrentPassword}
+                onTogglePassword={() => setShowCurrentPassword(!showCurrentPassword)}
+                {...register("currentPassword")}
+                disabled={isChangingPassword}
+              />
               {errors.currentPassword && (
                 <p className="text-sm text-destructive">
                   {errors.currentPassword.message}
@@ -131,27 +119,14 @@ export function PasswordChangeForm({
 
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  type={showNewPassword ? "text" : "password"}
-                  placeholder="Enter your new password"
-                  {...register("newPassword")}
-                  disabled={isChangingPassword}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showNewPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
+              <PasswordInput
+                id="newPassword"
+                placeholder="Enter your new password"
+                showPassword={showNewPassword}
+                onTogglePassword={() => setShowNewPassword(!showNewPassword)}
+                {...register("newPassword")}
+                disabled={isChangingPassword}
+              />
               {errors.newPassword && (
                 <p className="text-sm text-destructive">
                   {errors.newPassword.message}
@@ -161,27 +136,14 @@ export function PasswordChangeForm({
 
             <div className="space-y-2">
               <Label htmlFor="confirmNewPassword">Confirm New Password</Label>
-              <div className="relative">
-                <Input
-                  id="confirmNewPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm your new password"
-                  {...register("confirmNewPassword")}
-                  disabled={isChangingPassword}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
+              <PasswordInput
+                id="confirmNewPassword"
+                placeholder="Confirm your new password"
+                showPassword={showConfirmPassword}
+                onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                {...register("confirmNewPassword")}
+                disabled={isChangingPassword}
+              />
               {errors.confirmNewPassword && (
                 <p className="text-sm text-destructive">
                   {errors.confirmNewPassword.message}

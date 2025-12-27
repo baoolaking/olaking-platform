@@ -8,6 +8,7 @@ import { UserData, BankAccount } from "./use-wallet";
 
 interface PendingPayment {
   order_id: string;
+  order_number: string;
   amount: number;
   bank_account_id: string;
   status?: string; // Track the current status
@@ -33,7 +34,7 @@ export function useWalletFunding(userData: UserData | null, onDataReload: () => 
     try {
       const { data: existingOrders, error } = await supabase
         .from("orders")
-        .select("id, total_price, bank_account_id, status")
+        .select("id, order_number, total_price, bank_account_id, status")
         .eq("user_id", userData.id)
         .eq("link", "wallet_funding")
         .in("status", ["awaiting_payment", "awaiting_confirmation"])
@@ -50,6 +51,7 @@ export function useWalletFunding(userData: UserData | null, onDataReload: () => 
         const existingOrder = existingOrders[0];
         setPendingPayment({
           order_id: existingOrder.id,
+          order_number: existingOrder.order_number,
           amount: existingOrder.total_price,
           bank_account_id: existingOrder.bank_account_id,
           status: existingOrder.status,
@@ -160,7 +162,7 @@ export function useWalletFunding(userData: UserData | null, onDataReload: () => 
           payment_method: "bank_transfer",
           bank_account_id: bankAccountId,
         })
-        .select()
+        .select("id, order_number")
         .single();
 
       if (orderError) {
@@ -181,6 +183,7 @@ export function useWalletFunding(userData: UserData | null, onDataReload: () => 
       // Set pending payment and start polling
       setPendingPayment({
         order_id: orderResult.id,
+        order_number: orderResult.order_number,
         amount: amount,
         bank_account_id: bankAccountId,
         status: "awaiting_payment",

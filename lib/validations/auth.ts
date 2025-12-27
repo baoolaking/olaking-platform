@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { transformPhoneNumber } from "@/lib/utils/phone";
 
 export const registerSchema = z
   .object({
@@ -13,10 +14,17 @@ export const registerSchema = z
       ),
     whatsapp_no: z
       .string()
-      .regex(
-        /^\+?[1-9]\d{1,14}$/,
-        "Invalid WhatsApp number (use international format: +234...)"
-      ),
+      .min(1, "WhatsApp number is required")
+      .transform((val) => {
+        const result = transformPhoneNumber(val);
+        return result.formatted;
+      })
+      .refine((val) => {
+        const result = transformPhoneNumber(val);
+        return result.isValid;
+      }, {
+        message: "Invalid phone number. Supported formats: 09087654322, 7098765412, +2347098765412"
+      }),
     full_name: z.string().min(2, "Full name must be at least 2 characters"),
     password: z
       .string()

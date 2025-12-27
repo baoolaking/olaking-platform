@@ -18,13 +18,15 @@ import {
 import { PaymentStatusNotifications } from "./payment-status-notifications";
 
 interface PaymentWaitingStateProps {
-  orderId: string;
+  orderId: string; // UUID for API calls
+  orderNumber: string; // User-friendly number for display
   amount: number;
   onRefresh?: () => void;
 }
 
 export function PaymentWaitingState({
   orderId,
+  orderNumber,
   amount,
   onRefresh
 }: PaymentWaitingStateProps) {
@@ -169,7 +171,7 @@ export function PaymentWaitingState({
 
   const createWhatsAppLink = (number: string) => {
     const message = encodeURIComponent(
-      `Hi! I need help with my wallet funding. Order ID: ${orderId}, Amount: ₦${amount.toLocaleString()}. I've sent the payment and waiting for confirmation.`
+      `Hi! I need help with my wallet funding. Order: ${orderNumber}, Amount: ₦${amount.toLocaleString()}. I've sent the payment and waiting for confirmation.`
     );
     return `https://wa.me/${number.replace('+', '')}?text=${message}`;
   };
@@ -241,8 +243,8 @@ export function PaymentWaitingState({
           <h4 className="font-medium mb-2 text-sm">Order Details</h4>
           <div className="space-y-1 text-sm text-muted-foreground">
             <div className="flex justify-between">
-              <span>Order ID:</span>
-              <span className="font-mono text-xs">{orderId}</span>
+              <span>Order:</span>
+              <span className="font-mono text-xs">{orderNumber}</span>
             </div>
             <div className="flex justify-between">
               <span>Amount:</span>

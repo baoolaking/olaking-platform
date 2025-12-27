@@ -276,7 +276,7 @@ export function OrderFormModal({
                   onValueChange={(value) => setValue("payment_method", value as "wallet" | "bank_transfer")}
                   disabled={isOrdering}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="text-left">
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent className="z-50">

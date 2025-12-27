@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { WalletBalanceDisplay } from "@/components/services/wallet-balance-display";
 import { ServicesFilters } from "@/components/services/services-filters";
-import { ServicesGrid } from "@/components/services/services-grid";
+import { PlatformTabs } from "@/components/services/platform-tabs";
 import { OrderFormModal } from "@/components/services/order-form-modal";
 import { useServices } from "@/hooks/use-services";
 import { useServicesFilters } from "@/hooks/use-services-filters";
@@ -14,7 +14,7 @@ import { Service } from "@/components/services/types";
 export default function ServicesPage() {
   const router = useRouter();
   const { isLoading, services, bankAccounts, userData, refreshUserData } = useServices();
-  const { searchTerm, setSearchTerm, selectedPlatform, setSelectedPlatform, filteredServices } = useServicesFilters(services);
+  const { searchTerm, setSearchTerm } = useServicesFilters();
 
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [showOrderForm, setShowOrderForm] = useState(false);
@@ -54,19 +54,17 @@ export default function ServicesPage() {
       {/* Wallet Balance Display */}
       <WalletBalanceDisplay userData={userData} />
 
-      {/* Filters */}
+      {/* Search Filter */}
       <ServicesFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        selectedPlatform={selectedPlatform}
-        onPlatformChange={setSelectedPlatform}
-        services={services}
       />
 
-      {/* Services Grid */}
-      <ServicesGrid
-        services={filteredServices}
+      {/* Platform Tabs with Services */}
+      <PlatformTabs
+        services={services}
         onServiceSelect={handleServiceSelect}
+        searchTerm={searchTerm}
       />
 
       {/* Order Form Modal */}

@@ -97,6 +97,7 @@ export default function WalletPage() {
           ) : (
             <PaymentWaitingState
               orderId={pendingPayment.order_id}
+              orderNumber={pendingPayment.order_number}
               amount={pendingPayment.amount}
               onRefresh={refreshPaymentStatus}
             />

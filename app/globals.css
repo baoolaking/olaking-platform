@@ -209,6 +209,21 @@
     .mobile-card-spacing .card-content {
       padding-top: 0.75rem;
     }
+
+    /* Ensure password toggle buttons have proper touch targets */
+    .password-toggle-button {
+      min-height: 44px !important;
+      min-width: 44px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    /* Better input field spacing on mobile */
+    input[type="password"],
+    input[type="text"] {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
   }
 }
 

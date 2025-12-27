@@ -29,6 +29,7 @@ import { formatCurrency } from "@/lib/wallet/utils";
 import { formatPlatformName, formatServiceType } from "@/lib/validations/wallet";
 import { PaymentConfirmationSection } from "./payment-confirmation-section";
 import { AwaitingConfirmationSection } from "./awaiting-confirmation-section";
+import { Order } from "@/hooks/use-orders";
 
 type OrderStatus =
   | "awaiting_payment"
@@ -38,36 +39,6 @@ type OrderStatus =
   | "failed"
   | "awaiting_refund"
   | "refunded";
-
-interface Order {
-  id: string;
-  user_id: string;
-  service_id: string | null;
-  quantity: number;
-  price_per_1k: number;
-  total_price: number;
-  status: OrderStatus;
-  link: string;
-  quality_type: string;
-  payment_method: string;
-  bank_account_id: string | null;
-  payment_verified_at: string | null;
-  admin_notes: string | null;
-  completed_at: string | null;
-  cancelled_at: string | null;
-  created_at: string;
-  updated_at: string;
-  services?: {
-    platform: string;
-    service_type: string;
-    price_per_1k: number;
-  } | null;
-  bank_accounts?: {
-    account_name: string;
-    account_number: string;
-    bank_name: string;
-  } | null;
-}
 
 interface OrderCardProps {
   order: Order;
@@ -172,15 +143,15 @@ export function OrderCard({ order, onRefresh }: OrderCardProps) {
             </CardTitle>
             <CardDescription className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 text-xs sm:text-sm">
               <div className="flex items-center gap-1">
-                <span className="break-all">Order ID: {order.id.slice(0, 8)}...</span>
+                <span className="break-all">Order: {order.order_number}</span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => copyToClipboard(order.id, `order_id_${order.id}`)}
+                  onClick={() => copyToClipboard(order.order_number, `order_number_${order.id}`)}
                   className="h-5 w-5 p-0 hover:bg-muted"
-                  title="Copy Order ID"
+                  title="Copy Order Number"
                 >
-                  {copiedItems[`order_id_${order.id}`] ? (
+                  {copiedItems[`order_number_${order.id}`] ? (
                     <Check className="h-3 w-3 text-green-600" />
                   ) : (
                     <Copy className="h-3 w-3" />
@@ -344,6 +315,7 @@ export function OrderCard({ order, onRefresh }: OrderCardProps) {
             {/* Payment Confirmation Section */}
             <PaymentConfirmationSection
               orderId={order.id}
+              orderNumber={order.order_number}
               amount={order.total_price}
               onStatusUpdate={onRefresh}
             />
@@ -354,6 +326,7 @@ export function OrderCard({ order, onRefresh }: OrderCardProps) {
         {order.status === "awaiting_confirmation" && order.payment_method === "bank_transfer" && (
           <AwaitingConfirmationSection
             orderId={order.id}
+            orderNumber={order.order_number}
             amount={order.total_price}
             createdAt={order.created_at}
             onRefresh={onRefresh}

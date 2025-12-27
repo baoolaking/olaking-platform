@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Eye, EyeOff, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { registerSchema, type RegisterInput } from "@/lib/validations/auth";
 import { Navigation } from "@/components/sections/Navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { SmartPhoneInput } from "@/components/ui/smart-phone-input";
 import {
   Card,
   CardContent,
@@ -33,6 +35,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -236,48 +239,32 @@ export default function RegisterPage() {
                 </div>
 
                 {/* WhatsApp Number */}
-                <div className="space-y-2">
-                  <Label htmlFor="whatsapp_no">WhatsApp Number</Label>
-                  <Input
-                    id="whatsapp_no"
-                    type="tel"
-                    placeholder="+234XXXXXXXXXX"
-                    {...register("whatsapp_no")}
-                    disabled={isLoading}
-                  />
-                  {errors.whatsapp_no && (
-                    <p className="text-sm text-destructive">
-                      {errors.whatsapp_no.message}
-                    </p>
+                <Controller
+                  name="whatsapp_no"
+                  control={control}
+                  render={({ field }) => (
+                    <SmartPhoneInput
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      error={errors.whatsapp_no?.message}
+                      label="WhatsApp Number"
+                      placeholder="09087654322, 7098765412, or +2347098765412"
+                    />
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    Use international format (e.g., +234XXXXXXXXXX)
-                  </p>
-                </div>
+                />
 
                 {/* Password */}
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      {...register("password")}
-                      disabled={isLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
+                  <PasswordInput
+                    id="password"
+                    placeholder="••••••••"
+                    disabled={isLoading}
+                    showPassword={showPassword}
+                    onTogglePassword={() => setShowPassword(!showPassword)}
+                    {...register("password")}
+                  />
                   {errors.password && (
                     <p className="text-sm text-destructive">
                       {errors.password.message}
@@ -288,28 +275,14 @@ export default function RegisterPage() {
                 {/* Confirm Password */}
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      {...register("confirmPassword")}
-                      disabled={isLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
+                  <PasswordInput
+                    id="confirmPassword"
+                    placeholder="••••••••"
+                    disabled={isLoading}
+                    showPassword={showConfirmPassword}
+                    onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                    {...register("confirmPassword")}
+                  />
                   {errors.confirmPassword && (
                     <p className="text-sm text-destructive">
                       {errors.confirmPassword.message}

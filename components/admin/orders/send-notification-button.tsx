@@ -25,9 +25,10 @@ import { Order } from "@/hooks/use-admin-orders";
 
 interface SendNotificationButtonProps {
   order: Order;
+  variant?: "default" | "dropdown";
 }
 
-export function SendNotificationButton({ order }: SendNotificationButtonProps) {
+export function SendNotificationButton({ order, variant = "default" }: SendNotificationButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(order.status);
@@ -73,16 +74,23 @@ export function SendNotificationButton({ order }: SendNotificationButtonProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Mail className="h-4 w-4 mr-2" />
-          Send Email
-        </Button>
+        {variant === "dropdown" ? (
+          <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-2">
+            <Mail className="h-4 w-4 mr-2" />
+            Send Email
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm">
+            <Mail className="h-4 w-4 mr-2" />
+            Send Email
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Send Order Notification</DialogTitle>
           <DialogDescription>
-            Send an email notification to the customer for order {order.id.slice(0, 8)}...
+            Send an email notification to the customer for order {order.order_number}
           </DialogDescription>
         </DialogHeader>
 

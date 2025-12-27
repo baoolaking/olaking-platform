@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 
 interface AwaitingConfirmationSectionProps {
-  orderId: string;
+  orderId: string; // UUID for API calls
+  orderNumber: string; // User-friendly number for display
   amount: number;
   createdAt: string;
   onRefresh?: () => void;
@@ -22,6 +23,7 @@ interface AwaitingConfirmationSectionProps {
 
 export function AwaitingConfirmationSection({
   orderId,
+  orderNumber,
   amount,
   createdAt,
   onRefresh
@@ -168,7 +170,7 @@ export function AwaitingConfirmationSection({
     const defaultNumber = whatsappNumber1 || whatsappNumber2 || "+2349017992518";
 
     const message = encodeURIComponent(
-      `Hi! I need help with my order payment confirmation. Order ID: ${orderId}, Amount: ₦${amount.toLocaleString()}. I've sent the payment and it's awaiting confirmation.`
+      `Hi! I need help with my order payment confirmation. Order: ${orderNumber}, Amount: ₦${amount.toLocaleString()}. I've sent the payment and it's awaiting confirmation.`
     );
     return `https://wa.me/${defaultNumber.replace('+', '')}?text=${message}`;
   };

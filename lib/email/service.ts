@@ -131,7 +131,7 @@ export async function sendServiceOrderNotification({
           <div class="order-details">
             <h3 style="margin-top: 0;">Order Details:</h3>
             <ul style="list-style: none; padding: 0;">
-              <li><strong>Order ID:</strong> ${orderId}</li>
+              <li><strong>Order:</strong> ${orderId}</li>
               <li><strong>Customer:</strong> ${userName}</li>
               <li><strong>Email:</strong> ${userEmail}</li>
               <li><strong>Service:</strong> ${serviceName}</li>
@@ -219,7 +219,7 @@ export async function sendWalletFundingNotification({
           <div class="order-details">
             <h3 style="margin-top: 0;">Order Details:</h3>
             <ul style="list-style: none; padding: 0;">
-              <li><strong>Order ID:</strong> ${orderId}</li>
+              <li><strong>Order:</strong> ${orderId}</li>
               <li><strong>User:</strong> ${userName}</li>
               <li><strong>Email:</strong> ${userEmail}</li>
               <li><strong>Amount:</strong> <span class="amount">₦${amount.toLocaleString()}</span></li>

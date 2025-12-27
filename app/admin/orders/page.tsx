@@ -13,6 +13,7 @@ import { Pagination } from "@/components/dashboard/orders/pagination";
 import { useAdminOrders, Order } from "@/hooks/use-admin-orders";
 import { useAdminOrderFilters } from "@/hooks/use-admin-order-filters";
 import { usePagination } from "@/hooks/use-pagination";
+import { AdminOrdersDebug } from "@/components/debug/admin-orders-debug";
 
 export default function AdminOrdersPage() {
   const { orders, isLoading, error, updateOrderStatus, updateUserWallet } = useAdminOrders();
@@ -89,6 +90,9 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
+      {/* Debug Component - Remove in production */}
+      <AdminOrdersDebug />
+
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">Orders Management</h1>

@@ -6,13 +6,15 @@ import { toast } from "sonner";
 import { Send, MessageCircle, Loader2 } from "lucide-react";
 
 interface PaymentConfirmationSectionProps {
-  orderId: string;
+  orderId: string; // UUID for API calls
+  orderNumber: string; // User-friendly number for display
   amount: number;
   onStatusUpdate?: () => void;
 }
 
 export function PaymentConfirmationSection({
   orderId,
+  orderNumber,
   amount,
   onStatusUpdate
 }: PaymentConfirmationSectionProps) {
@@ -61,7 +63,7 @@ export function PaymentConfirmationSection({
     const defaultNumber = whatsappNumber1 || whatsappNumber2 || "+2349017992518";
 
     const message = encodeURIComponent(
-      `Hi! I need help with my order payment. Order ID: ${orderId}, Amount: ₦${amount.toLocaleString()}. I've sent the payment and need assistance.`
+      `Hi! I need help with my order payment. Order: ${orderNumber}, Amount: ₦${amount.toLocaleString()}. I've sent the payment and need assistance.`
     );
     return `https://wa.me/${defaultNumber.replace('+', '')}?text=${message}`;
   };

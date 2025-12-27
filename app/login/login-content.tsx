@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Eye, EyeOff, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Navigation } from "@/components/sections/Navigation";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
@@ -191,27 +192,15 @@ export default function LoginContent() {
 
                       <div className="space-y-2">
                         <Label htmlFor="password">Password</Label>
-                        <div className="relative">
-                          <Input
-                            id="password"
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
-                            disabled={isLoading}
-                            {...register("password")}
-                            className={errors.password ? "border-destructive" : ""}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword((prev) => !prev)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
+                        <PasswordInput
+                          id="password"
+                          placeholder="••••••••"
+                          disabled={isLoading}
+                          showPassword={showPassword}
+                          onTogglePassword={() => setShowPassword((prev) => !prev)}
+                          {...register("password")}
+                          className={errors.password ? "border-destructive" : ""}
+                        />
                         {errors.password && (
                           <p className="text-sm text-destructive">
                             {errors.password.message}

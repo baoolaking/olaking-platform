@@ -34,6 +34,7 @@ import { Order } from "@/hooks/use-orders";
 
 type OrderStatus =
   | "awaiting_payment"
+  | "awaiting_confirmation"
   | "pending"
   | "completed"
   | "failed"
@@ -53,6 +54,11 @@ const statusConfig: Record<OrderStatus, {
     color: "bg-yellow-500/10 text-yellow-700 border-yellow-500/20 dark:text-yellow-400",
     icon: <Clock className="h-3 w-3" />,
     label: "Awaiting Payment",
+  },
+  awaiting_confirmation: {
+    color: "bg-amber-500/10 text-amber-700 border-amber-500/20 dark:text-amber-400",
+    icon: <AlertCircle className="h-3 w-3" />,
+    label: "Awaiting Confirmation",
   },
   pending: {
     color: "bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400",
@@ -230,16 +236,16 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <span className="font-mono text-xs">
-                            {order.id.slice(0, 8)}...
+                            {order.order_number}
                           </span>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => copyToClipboard(order.id, `table_id_${order.id}`)}
+                            onClick={() => copyToClipboard(order.order_number, `table_number_${order.id}`)}
                             className="h-5 w-5 p-0 hover:bg-muted"
-                            title="Copy Order ID"
+                            title="Copy Order Number"
                           >
-                            {copiedItems[`table_id_${order.id}`] ? (
+                            {copiedItems[`table_number_${order.id}`] ? (
                               <Check className="h-3 w-3 text-green-600" />
                             ) : (
                               <Copy className="h-3 w-3" />
@@ -273,17 +279,17 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                           <div className="p-4 space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                               <div>
-                                <span className="font-medium">Order ID:</span>
+                                <span className="font-medium">Order Number:</span>
                                 <div className="flex items-center gap-2">
-                                  <span className="font-mono text-xs break-all">{order.id}</span>
+                                  <span className="font-mono text-xs break-all">{order.order_number}</span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => copyToClipboard(order.id, `expanded_order_id_${order.id}`)}
+                                    onClick={() => copyToClipboard(order.order_number, `expanded_order_number_${order.id}`)}
                                     className="h-5 w-5 p-0 hover:bg-muted flex-shrink-0"
-                                    title="Copy Order ID"
+                                    title="Copy Order Number"
                                   >
-                                    {copiedItems[`expanded_order_id_${order.id}`] ? (
+                                    {copiedItems[`expanded_order_number_${order.id}`] ? (
                                       <Check className="h-3 w-3 text-green-600" />
                                     ) : (
                                       <Copy className="h-3 w-3" />
