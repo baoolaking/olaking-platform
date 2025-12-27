@@ -126,8 +126,7 @@ export async function updateOrderStatus(
             balance_after: newBalance,
             description: `Wallet funding completed - Order ${orderId.slice(0, 8)}`,
             reference: `funding_completed_${orderId}`,
-            created_by: currentUser.id,
-            updated_at: new Date().toISOString()
+            created_by: currentUser.id
           })
           .eq("id", existingTransaction.id);
 
@@ -145,6 +144,12 @@ export async function updateOrderStatus(
         }
 
         console.log(`✅ Updated existing transaction ${existingTransaction.id} and credited wallet`);
+        
+        // Revalidate pages that show wallet balance
+        revalidatePath("/dashboard");
+        revalidatePath("/dashboard/wallet");
+        revalidatePath("/dashboard/services");
+        revalidatePath("/dashboard/profile");
       } else {
         console.log("No existing pending transaction found, using credit_wallet function");
         
@@ -163,6 +168,12 @@ export async function updateOrderStatus(
         }
 
         console.log(`✅ Wallet credited via credit_wallet function for order ${orderId}`);
+        
+        // Revalidate pages that show wallet balance
+        revalidatePath("/dashboard");
+        revalidatePath("/dashboard/wallet");
+        revalidatePath("/dashboard/services");
+        revalidatePath("/dashboard/profile");
       }
 
       // Revert the order status update if wallet operations fail

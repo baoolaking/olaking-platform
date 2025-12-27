@@ -1,9 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ConfirmSignOutButton } from "@/components/common/ConfirmSignOutButton";
 import { Button } from "@/components/ui/button";
-import { Menu, Wallet } from "lucide-react";
+import { Menu, Wallet, Loader2 } from "lucide-react";
+import { useWalletUpdates } from "@/hooks/use-wallet-context";
 
 interface DashboardHeaderProps {
   title?: string;
@@ -18,6 +20,25 @@ export function DashboardHeader({
   walletBalance,
   onToggleSidebar,
 }: DashboardHeaderProps) {
+  const [displayBalance, setDisplayBalance] = useState(walletBalance || 0);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Update display balance when walletBalance prop changes
+  useEffect(() => {
+    if (walletBalance !== undefined) {
+      setDisplayBalance(walletBalance);
+    }
+  }, [walletBalance]);
+
+  // Listen for wallet balance updates
+  useWalletUpdates((newBalance) => {
+    if (newBalance !== -1) {
+      setIsUpdating(true);
+      setDisplayBalance(newBalance);
+      // Clear updating state after a short delay
+      setTimeout(() => setIsUpdating(false), 1000);
+    }
+  });
   return (
     <header className="sticky top-0 z-20 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60 mb-6 border-b">
       <div className="flex items-center justify-between py-3 sm:py-4 gap-2 sm:gap-3">
@@ -41,11 +62,15 @@ export function DashboardHeader({
           </div>
         </div>
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {walletBalance !== undefined && (
+          {displayBalance !== undefined && (
             <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg bg-primary/10 border border-primary/20">
-              <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+              {isUpdating ? (
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 text-primary animate-spin" />
+              ) : (
+                <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+              )}
               <span className="text-xs sm:text-sm font-semibold">
-                ₦{walletBalance.toLocaleString()}
+                ₦{displayBalance.toLocaleString()}
               </span>
             </div>
           )}

@@ -132,7 +132,7 @@ export async function getActiveAdminEmails(): Promise<string[]> {
 }
 
 /**
- * Send admin notification email for service order payment confirmation
+ * Send admin notification email for service order creation
  */
 export async function sendServiceOrderNotification({
   orderId,
@@ -140,6 +140,7 @@ export async function sendServiceOrderNotification({
   userName,
   amount,
   serviceName,
+  paymentMethod,
   adminEmails,
 }: {
   orderId: string;
@@ -147,17 +148,20 @@ export async function sendServiceOrderNotification({
   userName: string;
   amount: number;
   serviceName: string;
+  paymentMethod?: 'wallet' | 'bank_transfer';
   adminEmails: string[];
 }) {
   const emailService = getEmailService();
   
-  const subject = `Service Order Payment Confirmation - Order ${orderId}`;
+  const isWalletOrder = paymentMethod === 'wallet';
+  const subject = `${isWalletOrder ? 'New Service Order (Wallet Payment)' : 'Service Order Payment Confirmation'} - Order ${orderId}`;
+  
   const html = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Service Order Payment Confirmation</title>
+      <title>${isWalletOrder ? 'New Service Order' : 'Service Order Payment Confirmation'}</title>
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -167,17 +171,21 @@ export async function sendServiceOrderNotification({
         .amount { font-size: 18px; font-weight: bold; color: #28a745; }
         .steps { background: #fff3cd; padding: 15px; border-radius: 6px; border-left: 4px solid #ffc107; }
         .steps ol { margin: 10px 0; padding-left: 20px; }
+        .wallet-steps { background: #d1ecf1; padding: 15px; border-radius: 6px; border-left: 4px solid #17a2b8; }
         .footer { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef; font-size: 12px; color: #6c757d; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1 style="margin: 0; color: #495057;">🛒 Service Order Payment Confirmation</h1>
+          <h1 style="margin: 0; color: #495057;">🛒 ${isWalletOrder ? 'New Service Order (Paid)' : 'Service Order Payment Confirmation'}</h1>
         </div>
         
         <div class="content">
-          <p>A customer has confirmed they have sent payment for a service order and is awaiting verification.</p>
+          <p>${isWalletOrder 
+            ? 'A customer has placed a new service order and paid with their wallet balance. The order is ready for processing.' 
+            : 'A customer has confirmed they have sent payment for a service order and is awaiting verification.'
+          }</p>
           
           <div class="order-details">
             <h3 style="margin-top: 0;">Order Details:</h3>
@@ -187,12 +195,26 @@ export async function sendServiceOrderNotification({
               <li><strong>Email:</strong> ${userEmail}</li>
               <li><strong>Service:</strong> ${serviceName}</li>
               <li><strong>Amount:</strong> <span class="amount">₦${amount.toLocaleString()}</span></li>
-              <li><strong>Status:</strong> Awaiting Confirmation</li>
+              <li><strong>Payment:</strong> ${isWalletOrder ? 'Wallet (Already Paid)' : 'Bank Transfer (Awaiting Confirmation)'}</li>
+              <li><strong>Status:</strong> ${isWalletOrder ? 'Pending (Ready to Process)' : 'Awaiting Confirmation'}</li>
             </ul>
           </div>
           
+          ${isWalletOrder ? `
+          <div class="wallet-steps">
+            <p><strong>⚡ Next Steps (Wallet Order):</strong></p>
+            <ol>
+              <li>Log into the admin panel</li>
+              <li>Navigate to Orders → Service Orders</li>
+              <li>Find order ${orderId} (status: pending)</li>
+              <li>Begin processing the order immediately</li>
+              <li>Update status to "completed" when finished</li>
+            </ol>
+            <p><strong>Note:</strong> Payment has already been deducted from the customer's wallet.</p>
+          </div>
+          ` : `
           <div class="steps">
-            <p><strong>⚡ Next Steps:</strong></p>
+            <p><strong>⚡ Next Steps (Bank Transfer):</strong></p>
             <ol>
               <li>Check your bank account for the payment of ₦${amount.toLocaleString()}</li>
               <li>Log into the admin panel</li>
@@ -201,8 +223,9 @@ export async function sendServiceOrderNotification({
               <li>Update status to "pending" to start processing the order</li>
             </ol>
           </div>
+          `}
           
-          <p style="margin-bottom: 0;">Please process this confirmation as soon as possible to ensure good customer experience.</p>
+          <p style="margin-bottom: 0;">Please process this ${isWalletOrder ? 'order' : 'confirmation'} as soon as possible to ensure good customer experience.</p>
         </div>
         
         <div class="footer">

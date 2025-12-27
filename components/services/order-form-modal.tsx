@@ -37,6 +37,8 @@ import {
   validateServiceQuantity,
   formatCurrency,
 } from "@/lib/wallet/utils";
+import { broadcastWalletUpdate } from "@/hooks/use-wallet-context";
+import { useOptimisticWallet } from "@/hooks/use-optimistic-wallet";
 import { Service, UserData, BankAccount } from "./types";
 
 interface OrderFormModalProps {
@@ -60,6 +62,15 @@ export function OrderFormModal({
   const supabase = createClient();
   const [isOrdering, setIsOrdering] = useState(false);
 
+  // Initialize optimistic wallet for better UX
+  const {
+    balance: displayBalance,
+    isOptimistic,
+    optimisticDeduct,
+    confirmDeduction,
+    revertOptimistic,
+  } = useOptimisticWallet(userData?.wallet_balance || 0);
+
   // Create dynamic schema based on the selected service
   const dynamicSchema = serviceOrderSchema.extend({
     quantity: z
@@ -82,7 +93,7 @@ export function OrderFormModal({
       service_type: service.service_type,
       quantity: service.min_quantity,
       quality_type: "high_quality",
-      payment_method: userData && userData.wallet_balance > 0 ? "wallet" : "bank_transfer",
+      payment_method: userData && displayBalance > 0 ? "wallet" : "bank_transfer",
     }
   });
 
@@ -116,7 +127,7 @@ export function OrderFormModal({
 
     // Check payment method requirements
     if (data.payment_method === "wallet") {
-      const hasSufficientBalance = await checkSufficientBalance(userData.id, totalPrice);
+      const hasSufficientBalance = displayBalance >= totalPrice;
       if (!hasSufficientBalance) {
         toast.error("Insufficient wallet balance. Please fund your wallet or choose bank transfer.");
         return;
@@ -127,12 +138,20 @@ export function OrderFormModal({
     }
 
     setIsOrdering(true);
+
+    // Optimistically deduct from wallet for better UX
+    if (data.payment_method === "wallet") {
+      optimisticDeduct(totalPrice);
+    }
+
     try {
-      // Create the order
-      const { data: orderResult, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: userData.id,
+      // Create the order via API
+      const createOrderResponse = await fetch("/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           service_id: data.service_id,
           quantity: data.quantity,
           price_per_1k: service.price_per_1k,
@@ -142,11 +161,18 @@ export function OrderFormModal({
           quality_type: data.quality_type,
           payment_method: data.payment_method,
           bank_account_id: data.bank_account_id || null,
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (orderError) throw orderError;
+      if (!createOrderResponse.ok) {
+        const errorData = await createOrderResponse.json();
+        throw new Error(errorData.error || "Failed to create order");
+      }
+
+      const createOrderResult = await createOrderResponse.json();
+      const orderResult = createOrderResult.order;
+
+      console.log("✅ Order created successfully:", orderResult.id);
 
       // If paying with wallet, deduct the amount
       if (data.payment_method === "wallet") {
@@ -165,6 +191,15 @@ export function OrderFormModal({
         if (!deductResponse.ok) {
           const errorData = await deductResponse.json();
           throw new Error(errorData.error || "Failed to process wallet payment");
+        }
+
+        // Get the updated wallet balance from the response
+        const deductResult = await deductResponse.json();
+        const newBalance = deductResult.newBalance;
+
+        // Confirm the optimistic update with actual balance
+        if (typeof newBalance === 'number') {
+          confirmDeduction(newBalance);
         }
 
         toast.success("Order placed successfully! Payment deducted from wallet.", {
@@ -186,6 +221,12 @@ export function OrderFormModal({
 
     } catch (error) {
       console.error("Error creating order:", error);
+
+      // Revert optimistic update on error
+      if (data.payment_method === "wallet") {
+        revertOptimistic();
+      }
+
       toast.error("Failed to create order", {
         description: error instanceof Error ? error.message : "Please try again",
         icon: <XCircle className="h-5 w-5" />,
@@ -280,12 +321,12 @@ export function OrderFormModal({
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent className="z-50">
-                    {userData && userData.wallet_balance > 0 && (
+                    {userData && displayBalance > 0 && (
                       <SelectItem value="wallet">
                         <div className="flex flex-col">
-                          <span>Wallet</span>
+                          <span>Wallet {isOptimistic && "(updating...)"}</span>
                           <span className="text-xs text-muted-foreground">
-                            {formatCurrency(userData.wallet_balance)}
+                            {formatCurrency(displayBalance)}
                           </span>
                         </div>
                       </SelectItem>

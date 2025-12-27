@@ -59,6 +59,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get updated wallet balance to return to client
+    const { data: updatedUser, error: balanceError } = await supabase
+      .from("users")
+      .select("wallet_balance")
+      .eq("id", userId)
+      .single();
+
+    const newBalance = updatedUser?.wallet_balance || 0;
+
     // Revalidate pages that show wallet balance
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/services");
@@ -66,7 +75,11 @@ export async function POST(request: NextRequest) {
     revalidatePath("/dashboard/profile");
     revalidatePath("/admin/users");
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true, 
+      newBalance,
+      message: "Wallet credited successfully"
+    });
   } catch (error) {
     console.error("Wallet credit error:", error);
     return NextResponse.json(

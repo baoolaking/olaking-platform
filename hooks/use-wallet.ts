@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useWalletUpdates } from "@/hooks/use-wallet-context";
 
 export interface UserData {
   id: string;
@@ -54,6 +55,9 @@ export function useWallet() {
         return;
       }
 
+      // Store previous balance to detect changes
+      const previousBalance = userData?.wallet_balance || 0;
+
       // Load user data
       const { data: userDataResult, error: userError } = await supabase
         .from("users")
@@ -63,6 +67,14 @@ export function useWallet() {
 
       if (userError) throw userError;
       setUserData(userDataResult);
+
+      // Check if wallet balance changed and broadcast update
+      if (userDataResult && userDataResult.wallet_balance !== previousBalance) {
+        console.log(`Wallet balance changed from ${previousBalance} to ${userDataResult.wallet_balance}`);
+        // Import dynamically to avoid circular dependencies
+        const { broadcastWalletUpdate } = await import("@/hooks/use-wallet-context");
+        broadcastWalletUpdate(userDataResult.wallet_balance);
+      }
 
       // Load bank accounts
       const { data: bankAccountsResult, error: bankError } = await supabase
@@ -106,6 +118,20 @@ export function useWallet() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Listen for wallet balance updates
+  useWalletUpdates((newBalance) => {
+    if (newBalance === -1) {
+      // Refresh signal - reload all data
+      loadData();
+    } else if (userData) {
+      // Direct balance update
+      setUserData({
+        ...userData,
+        wallet_balance: newBalance
+      });
+    }
+  });
 
   return {
     userData,

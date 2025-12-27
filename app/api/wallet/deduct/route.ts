@@ -66,6 +66,16 @@ export async function POST(request: NextRequest) {
 
       console.log("Main database function succeeded");
       
+      // Get updated wallet balance to return to client
+      const { data: updatedUser, error: balanceError } = await supabase
+        .from("users")
+        .select("wallet_balance")
+        .eq("id", user.id)
+        .single();
+
+      const newBalance = updatedUser?.wallet_balance || 0;
+      console.log("Updated wallet balance:", newBalance);
+      
       // Revalidate pages that show wallet balance
       revalidatePath("/dashboard");
       revalidatePath("/dashboard/services");
@@ -73,7 +83,11 @@ export async function POST(request: NextRequest) {
       revalidatePath("/dashboard/profile");
       revalidatePath("/admin/users");
       
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ 
+        success: true, 
+        newBalance,
+        message: "Wallet deducted successfully"
+      });
     } catch (functionError) {
       console.log("Main function failed, trying simple function:", functionError);
       
@@ -103,6 +117,16 @@ export async function POST(request: NextRequest) {
 
         console.log("Simple database function succeeded");
         
+        // Get updated wallet balance to return to client
+        const { data: updatedUser, error: balanceError } = await supabase
+          .from("users")
+          .select("wallet_balance")
+          .eq("id", user.id)
+          .single();
+
+        const newBalance = updatedUser?.wallet_balance || 0;
+        console.log("Updated wallet balance:", newBalance);
+        
         // Revalidate pages that show wallet balance
         revalidatePath("/dashboard");
         revalidatePath("/dashboard/services");
@@ -110,7 +134,11 @@ export async function POST(request: NextRequest) {
         revalidatePath("/dashboard/profile");
         revalidatePath("/admin/users");
         
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ 
+          success: true, 
+          newBalance,
+          message: "Wallet deducted successfully"
+        });
       } catch (simpleFunctionError) {
         console.log("Simple function also failed, trying manual approach:", simpleFunctionError);
       }
@@ -199,7 +227,11 @@ export async function POST(request: NextRequest) {
       revalidatePath("/dashboard/profile");
       revalidatePath("/admin/users");
       
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ 
+        success: true, 
+        newBalance,
+        message: "Wallet deducted successfully"
+      });
     }
   } catch (error) {
     console.error("=== Wallet deduction error ===", error);

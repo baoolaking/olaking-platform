@@ -143,6 +143,7 @@ export async function POST(request: NextRequest) {
             userName: userData?.full_name || "Unknown User",
             amount: order.total_price,
             serviceName: `${order.services?.[0]?.platform || 'Unknown'} ${order.services?.[0]?.service_type || 'Service'}`,
+            paymentMethod: 'bank_transfer',
             adminEmails,
           });
         }

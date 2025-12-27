@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useWalletUpdates } from "@/hooks/use-wallet-context";
 import { Service, BankAccount, UserData } from "@/components/services/types";
 
 export function useServices() {
@@ -21,6 +22,9 @@ export function useServices() {
       } = await supabase.auth.getUser();
 
       if (user) {
+        // Store previous balance to detect changes
+        const previousBalance = userData?.wallet_balance || 0;
+
         const { data: userDataResult, error: userError } = await supabase
           .from("users")
           .select("id, wallet_balance, full_name")
@@ -29,6 +33,14 @@ export function useServices() {
 
         if (!userError && userDataResult) {
           setUserData(userDataResult);
+
+          // Check if wallet balance changed and broadcast update
+          if (userDataResult.wallet_balance !== previousBalance) {
+            console.log(`Services page: Wallet balance changed from ${previousBalance} to ${userDataResult.wallet_balance}`);
+            // Import dynamically to avoid circular dependencies
+            const { broadcastWalletUpdate } = await import("@/hooks/use-wallet-context");
+            broadcastWalletUpdate(userDataResult.wallet_balance);
+          }
         }
       }
     } catch (error) {
@@ -48,6 +60,9 @@ export function useServices() {
         return;
       }
 
+      // Store previous balance to detect changes
+      const previousBalance = userData?.wallet_balance || 0;
+
       // Load user data
       const { data: userDataResult, error: userError } = await supabase
         .from("users")
@@ -57,6 +72,14 @@ export function useServices() {
 
       if (userError) throw userError;
       setUserData(userDataResult);
+
+      // Check if wallet balance changed and broadcast update
+      if (userDataResult && userDataResult.wallet_balance !== previousBalance) {
+        console.log(`Services page: Initial wallet balance loaded: ${userDataResult.wallet_balance}`);
+        // Import dynamically to avoid circular dependencies
+        const { broadcastWalletUpdate } = await import("@/hooks/use-wallet-context");
+        broadcastWalletUpdate(userDataResult.wallet_balance);
+      }
 
       // Load active services
       const { data: servicesResult, error: servicesError } = await supabase
@@ -90,6 +113,20 @@ export function useServices() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Listen for wallet balance updates
+  useWalletUpdates((newBalance) => {
+    if (newBalance === -1) {
+      // Refresh signal - reload user data
+      refreshUserData();
+    } else if (userData) {
+      // Direct balance update
+      setUserData({
+        ...userData,
+        wallet_balance: newBalance
+      });
+    }
+  });
 
   return {
     isLoading,
