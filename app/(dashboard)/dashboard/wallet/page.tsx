@@ -7,8 +7,8 @@ import { FundingForm } from "@/components/dashboard/wallet/funding-form";
 import { PaymentInstructions } from "@/components/dashboard/wallet/payment-instructions";
 import { PaymentWaitingState } from "@/components/dashboard/wallet/payment-waiting-state";
 import { MigrationStatusChecker } from "@/components/dashboard/wallet/migration-status";
-// import { TestPaymentButton } from "@/components/debug/test-payment-button";
 import { TransactionHistory } from "@/components/dashboard/wallet/transaction-history";
+import { TikTokCoinBanner } from "@/components/common/TikTokCoinBanner";
 import { useWallet } from "@/hooks/use-wallet";
 import { useWalletFunding } from "@/hooks/use-wallet-funding";
 import { fundWalletSchema, type FundWalletInput } from "@/lib/validations/wallet";
@@ -52,6 +52,12 @@ export default function WalletPage() {
 
   return (
     <div className="space-y-6">
+      {/* TikTok Coin Promotion Banner */}
+      <TikTokCoinBanner
+        whatsappNumber={userData?.whatsapp_no || "your-whatsapp-number"}
+        className="mb-4"
+      />
+
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">Wallet</h1>

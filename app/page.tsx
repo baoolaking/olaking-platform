@@ -7,6 +7,7 @@ import { ObjectivesSection } from "@/components/sections/ObjectivesSection";
 import { FeaturesSection } from "@/components/sections/FeaturesSection";
 import { CtaSection } from "@/components/sections/CtaSection";
 import { Footer } from "@/components/sections/Footer";
+import { TikTokCoinPopup } from "@/components/common/TikTokCoinPopup";
 
 export default function LandingPage() {
   return (
@@ -20,6 +21,12 @@ export default function LandingPage() {
         <CtaSection />
         <Footer />
       </div>
+
+      {/* TikTok Coin Popup - shows after 3 seconds */}
+      <TikTokCoinPopup
+        showOnMount={true}
+        whatsappNumber={undefined} // Will use default from config
+      />
     </>
   );
 }

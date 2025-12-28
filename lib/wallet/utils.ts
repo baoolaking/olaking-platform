@@ -175,10 +175,52 @@ export async function getWhatsAppContacts(): Promise<string[]> {
 }
 
 /**
- * Calculate service price based on quantity and price per 1k
+ * Calculate service price based on quantity, quality type, and service pricing
  */
-export function calculateServicePrice(quantity: number, pricePer1k: number): number {
+export function calculateServicePrice(
+  quantity: number, 
+  service: { high_quality_price_per_1k: number; low_quality_price_per_1k: number } | { price_per_1k: number },
+  qualityType: 'high_quality' | 'low_quality' = 'high_quality'
+): number {
+  let pricePer1k: number;
+  
+  // Handle new quality-based pricing structure
+  if ('high_quality_price_per_1k' in service && 'low_quality_price_per_1k' in service) {
+    pricePer1k = qualityType === 'high_quality' 
+      ? service.high_quality_price_per_1k 
+      : service.low_quality_price_per_1k;
+  } 
+  // Fallback to legacy pricing structure
+  else if ('price_per_1k' in service) {
+    pricePer1k = service.price_per_1k;
+  } 
+  else {
+    throw new Error('Invalid service pricing structure');
+  }
+  
   return Math.ceil((quantity / 1000) * pricePer1k);
+}
+
+/**
+ * Get price per 1k for a specific quality type
+ */
+export function getPricePerK(
+  service: { high_quality_price_per_1k: number; low_quality_price_per_1k: number } | { price_per_1k: number },
+  qualityType: 'high_quality' | 'low_quality' = 'high_quality'
+): number {
+  // Handle new quality-based pricing structure
+  if ('high_quality_price_per_1k' in service && 'low_quality_price_per_1k' in service) {
+    return qualityType === 'high_quality' 
+      ? service.high_quality_price_per_1k 
+      : service.low_quality_price_per_1k;
+  } 
+  // Fallback to legacy pricing structure
+  else if ('price_per_1k' in service) {
+    return service.price_per_1k;
+  } 
+  else {
+    throw new Error('Invalid service pricing structure');
+  }
 }
 
 /**

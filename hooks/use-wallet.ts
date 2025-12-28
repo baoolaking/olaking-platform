@@ -12,6 +12,7 @@ export interface UserData {
   username: string;
   full_name: string;
   wallet_balance: number;
+  whatsapp_no?: string;
 }
 
 export interface BankAccount {
@@ -61,7 +62,7 @@ export function useWallet() {
       // Load user data
       const { data: userDataResult, error: userError } = await supabase
         .from("users")
-        .select("id, email, username, full_name, wallet_balance")
+        .select("id, email, username, full_name, wallet_balance, whatsapp_no")
         .eq("id", user.id)
         .single();
 

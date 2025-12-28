@@ -36,6 +36,7 @@ import {
   calculateServicePrice,
   validateServiceQuantity,
   formatCurrency,
+  getPricePerK,
 } from "@/lib/wallet/utils";
 import { broadcastWalletUpdate } from "@/hooks/use-wallet-context";
 import { useOptimisticWallet } from "@/hooks/use-optimistic-wallet";
@@ -99,14 +100,15 @@ export function OrderFormModal({
   });
 
   const watchedQuantity = watch("quantity");
+  const watchedQualityType = watch("quality_type");
   const watchedPaymentMethod = watch("payment_method");
 
   useEffect(() => {
     if (service && watchedQuantity) {
-      const calculatedPrice = calculateServicePrice(watchedQuantity, service.price_per_1k);
+      const calculatedPrice = calculateServicePrice(watchedQuantity, service, watchedQualityType);
       // Update form with calculated price (for display purposes)
     }
-  }, [service, watchedQuantity]);
+  }, [service, watchedQuantity, watchedQualityType]);
 
   const onSubmit = async (data: ServiceOrderInput) => {
     if (!userData || !service) return;
@@ -123,8 +125,9 @@ export function OrderFormModal({
       return;
     }
 
-    // Calculate total price
-    const totalPrice = calculateServicePrice(data.quantity, service.price_per_1k);
+    // Calculate total price based on quality type
+    const totalPrice = calculateServicePrice(data.quantity, service, data.quality_type);
+    const pricePerK = getPricePerK(service, data.quality_type);
 
     // Check payment method requirements
     if (data.payment_method === "wallet") {
@@ -157,7 +160,7 @@ export function OrderFormModal({
         body: JSON.stringify({
           service_id: data.service_id,
           quantity: data.quantity,
-          price_per_1k: service.price_per_1k,
+          price_per_1k: pricePerK,
           total_price: totalPrice,
           status: data.payment_method === "wallet" ? "pending" : "awaiting_payment", // Only wallet supported for now
           link: data.link,
@@ -388,11 +391,11 @@ export function OrderFormModal({
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Total Price:</span>
                   <span className="text-xl font-bold text-primary">
-                    {formatCurrency(calculateServicePrice(watchedQuantity, service.price_per_1k))}
+                    {formatCurrency(calculateServicePrice(watchedQuantity, service, watchedQualityType))}
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {watchedQuantity.toLocaleString()} × {formatCurrency(service.price_per_1k)}/1k
+                  {watchedQuantity.toLocaleString()} × {formatCurrency(getPricePerK(service, watchedQualityType))}/1k ({watchedQualityType === 'high_quality' ? 'High' : 'Low'} Quality)
                 </p>
               </div>
             )}

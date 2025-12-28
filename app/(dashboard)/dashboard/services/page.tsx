@@ -10,6 +10,7 @@ import { PlatformServicesView } from "@/components/services/platform-services-vi
 import { OtherServicesView } from "@/components/services/other-services-view";
 import { OrderFormModal } from "@/components/services/order-form-modal";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TikTokCoinBanner } from "@/components/common/TikTokCoinBanner";
 import { useServices } from "@/hooks/use-services";
 import { useServicesFilters } from "@/hooks/use-services-filters";
 import { Service } from "@/components/services/types";
@@ -74,6 +75,12 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-6">
+      {/* TikTok Coin Promotion Banner */}
+      <TikTokCoinBanner
+        whatsappNumber={userData?.whatsapp_no || "your-whatsapp-number"}
+        className="mb-4"
+      />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Services</h1>

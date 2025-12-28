@@ -144,12 +144,23 @@ export function ServicesTable({ services }: ServicesTableProps) {
             ),
           },
           {
-            key: "price_per_1k",
-            label: "Price/1K",
-            render: (price: unknown) => (
-              <span className="font-medium">
-                ₦{Number(price).toLocaleString()}
-              </span>
+            key: "pricing",
+            label: "Pricing/1K",
+            render: (_: unknown, row: Service) => (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">High:</span>
+                  <span className="font-medium text-sm">
+                    ₦{Number(row.high_quality_price_per_1k || row.price_per_1k).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Low:</span>
+                  <span className="font-medium text-sm">
+                    ₦{Number(row.low_quality_price_per_1k || row.price_per_1k * 0.7).toLocaleString()}
+                  </span>
+                </div>
+              </div>
             ),
           },
           {
@@ -203,7 +214,8 @@ export function ServicesTable({ services }: ServicesTableProps) {
             <span className="capitalize">{row.service_type}</span>
             <span className="text-muted-foreground">-</span>
             <span className="font-semibold">
-              ₦{Number(row.price_per_1k).toLocaleString()}
+              H: ₦{Number(row.high_quality_price_per_1k || row.price_per_1k).toLocaleString()} /
+              L: ₦{Number(row.low_quality_price_per_1k || row.price_per_1k * 0.7).toLocaleString()}
             </span>
           </div>
         )}

@@ -207,17 +207,43 @@ export function ServiceForm({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="price_per_1k">Price per 1K</Label>
-            <Input
-              id="price_per_1k"
-              name="price_per_1k"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              required
-              defaultValue={service?.price_per_1k || ""}
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Pricing per 1K</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="high_quality_price_per_1k" className="text-xs text-muted-foreground">
+                    High Quality Price
+                  </Label>
+                  <Input
+                    id="high_quality_price_per_1k"
+                    name="high_quality_price_per_1k"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    required
+                    defaultValue={service?.high_quality_price_per_1k || service?.price_per_1k || ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="low_quality_price_per_1k" className="text-xs text-muted-foreground">
+                    Low Quality Price
+                  </Label>
+                  <Input
+                    id="low_quality_price_per_1k"
+                    name="low_quality_price_per_1k"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    required
+                    defaultValue={service?.low_quality_price_per_1k || (service?.price_per_1k ? service.price_per_1k * 0.7 : "")}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Set different prices for high and low quality service options
+              </p>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

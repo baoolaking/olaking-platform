@@ -284,6 +284,20 @@ export function OrdersTable({ orders, onEditOrder, onWalletUpdate, onAssignOrder
               ),
             },
             {
+              key: "pricing_details",
+              label: "Pricing",
+              render: (_, row: Order) => (
+                <div className="text-xs">
+                  <div className="font-medium">
+                    {formatCurrency(row.price_per_1k)}/1k
+                  </div>
+                  <div className="text-muted-foreground capitalize">
+                    {row.quality_type?.replace('_', ' ') || 'High Quality'}
+                  </div>
+                </div>
+              ),
+            },
+            {
               key: "total_price",
               label: "Amount",
               render: (amount: any) => (

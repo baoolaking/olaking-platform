@@ -10,6 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Wallet, ShoppingBag, TrendingUp, LogOut } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import { TikTokCoinBanner } from "@/components/common/TikTokCoinBanner";
+import { TikTokCoinQuickAction } from "@/components/common/TikTokCoinQuickAction";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -56,6 +59,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* TikTok Coin Banner - Prominent at the top */}
+      <TikTokCoinBanner
+        whatsappNumber={userData.whatsapp_no || "your-whatsapp-number"}
+      />
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">
@@ -123,24 +131,39 @@ export default async function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Get started with your dashboard</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <Link href="/dashboard/services">
-            <Button className="w-full" size="lg">
-              Browse Services
-            </Button>
-          </Link>
-          <Link href="/dashboard/orders">
-            <Button className="w-full" variant="outline" size="lg">
-              View Orders
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* TikTok Coins Quick Action */}
+        <TikTokCoinQuickAction whatsappNumber={userData.whatsapp_no} />
+
+        {/* Existing Quick Actions */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Browse Services</CardTitle>
+            <CardDescription>Explore all available services</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/services">
+              <Button className="w-full" size="lg">
+                Browse Services
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">View Orders</CardTitle>
+            <CardDescription>Check your order history</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/orders">
+              <Button className="w-full" variant="outline" size="lg">
+                View Orders
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Account Info */}
       <Card>

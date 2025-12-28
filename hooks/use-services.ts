@@ -27,7 +27,7 @@ export function useServices() {
 
         const { data: userDataResult, error: userError } = await supabase
           .from("users")
-          .select("id, wallet_balance, full_name")
+          .select("id, wallet_balance, full_name, whatsapp_no")
           .eq("id", user.id)
           .single();
 
@@ -66,7 +66,7 @@ export function useServices() {
       // Load user data
       const { data: userDataResult, error: userError } = await supabase
         .from("users")
-        .select("id, wallet_balance, full_name")
+        .select("id, wallet_balance, full_name, whatsapp_no")
         .eq("id", user.id)
         .single();
 

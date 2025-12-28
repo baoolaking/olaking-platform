@@ -267,8 +267,10 @@ export type Database = {
           created_at: string | null
           delivery_time: string | null
           description: string | null
+          high_quality_price_per_1k: number
           id: string
           is_active: boolean | null
+          low_quality_price_per_1k: number
           max_quantity: number | null
           min_quantity: number | null
           platform: Database["public"]["Enums"]["platform_enum"]
@@ -280,8 +282,10 @@ export type Database = {
           created_at?: string | null
           delivery_time?: string | null
           description?: string | null
+          high_quality_price_per_1k: number
           id?: string
           is_active?: boolean | null
+          low_quality_price_per_1k: number
           max_quantity?: number | null
           min_quantity?: number | null
           platform: Database["public"]["Enums"]["platform_enum"]
@@ -293,8 +297,10 @@ export type Database = {
           created_at?: string | null
           delivery_time?: string | null
           description?: string | null
+          high_quality_price_per_1k?: number
           id?: string
           is_active?: boolean | null
+          low_quality_price_per_1k?: number
           max_quantity?: number | null
           min_quantity?: number | null
           platform?: Database["public"]["Enums"]["platform_enum"]

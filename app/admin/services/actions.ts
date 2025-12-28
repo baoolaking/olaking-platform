@@ -18,7 +18,8 @@ export async function createService(formData: FormData) {
 
   const platform = formData.get("platform") as string;
   const serviceType = formData.get("service_type") as string;
-  const pricePerK = parseFloat(formData.get("price_per_1k") as string);
+  const highQualityPrice = parseFloat(formData.get("high_quality_price_per_1k") as string);
+  const lowQualityPrice = parseFloat(formData.get("low_quality_price_per_1k") as string);
   const minQuantity = parseInt(formData.get("min_quantity") as string);
   const maxQuantity = parseInt(formData.get("max_quantity") as string);
   const description = formData.get("description") as string;
@@ -28,7 +29,9 @@ export async function createService(formData: FormData) {
   const newService = {
     platform,
     service_type: serviceType,
-    price_per_1k: pricePerK,
+    high_quality_price_per_1k: highQualityPrice,
+    low_quality_price_per_1k: lowQualityPrice,
+    price_per_1k: highQualityPrice, // Keep for backward compatibility
     min_quantity: minQuantity,
     max_quantity: maxQuantity,
     description: description || null,
@@ -54,6 +57,8 @@ export async function createService(formData: FormData) {
     newValues: await extractAuditFields(newService, [
       "platform",
       "service_type",
+      "high_quality_price_per_1k",
+      "low_quality_price_per_1k",
       "price_per_1k",
       "min_quantity",
       "max_quantity",
@@ -86,7 +91,8 @@ export async function updateService(id: string, formData: FormData) {
 
   const platform = formData.get("platform") as string;
   const serviceType = formData.get("service_type") as string;
-  const pricePerK = parseFloat(formData.get("price_per_1k") as string);
+  const highQualityPrice = parseFloat(formData.get("high_quality_price_per_1k") as string);
+  const lowQualityPrice = parseFloat(formData.get("low_quality_price_per_1k") as string);
   const minQuantity = parseInt(formData.get("min_quantity") as string);
   const maxQuantity = parseInt(formData.get("max_quantity") as string);
   const description = formData.get("description") as string;
@@ -96,7 +102,9 @@ export async function updateService(id: string, formData: FormData) {
   const newValues = {
     platform,
     service_type: serviceType,
-    price_per_1k: pricePerK,
+    high_quality_price_per_1k: highQualityPrice,
+    low_quality_price_per_1k: lowQualityPrice,
+    price_per_1k: highQualityPrice, // Keep for backward compatibility
     min_quantity: minQuantity,
     max_quantity: maxQuantity,
     description: description || null,
