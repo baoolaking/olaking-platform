@@ -62,7 +62,16 @@ export default function LoginContent() {
       const isAdmin = ["super_admin", "sub_admin"].includes(
         userData?.role ?? ""
       );
-      const destination = redirectTo || (isAdmin ? "/admin" : "/dashboard");
+      // Role-based redirect logic: admins go to /admin, regular users go to /dashboard
+      // Ignore callback URLs that don't match the user's role
+      let destination: string;
+      if (isAdmin) {
+        // Admins always go to admin dashboard, ignore any dashboard callback URLs
+        destination = "/admin";
+      } else {
+        // Regular users go to callback URL only if it's not an admin route, otherwise dashboard
+        destination = redirectTo && !redirectTo.startsWith("/admin") ? redirectTo : "/dashboard";
+      }
 
       router.replace(destination);
     };
@@ -115,7 +124,16 @@ export default function LoginContent() {
 
       const redirectTo = searchParams?.get("redirectTo");
       const isAdmin = ["super_admin", "sub_admin"].includes(userRecord.role);
-      const destination = redirectTo || (isAdmin ? "/admin" : "/dashboard");
+      // Role-based redirect logic: admins go to /admin, regular users go to /dashboard
+      // Ignore callback URLs that don't match the user's role
+      let destination: string;
+      if (isAdmin) {
+        // Admins always go to admin dashboard, ignore any dashboard callback URLs
+        destination = "/admin";
+      } else {
+        // Regular users go to callback URL only if it's not an admin route, otherwise dashboard
+        destination = redirectTo && !redirectTo.startsWith("/admin") ? redirectTo : "/dashboard";
+      }
 
       toast.success("Signed in successfully", {
         description: "Redirecting to your dashboard...",
