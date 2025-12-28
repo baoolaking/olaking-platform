@@ -160,6 +160,8 @@ export type Database = {
       orders: {
         Row: {
           admin_notes: string | null
+          assigned_at: string | null
+          assigned_to: string | null
           bank_account_id: string | null
           cancelled_at: string | null
           completed_at: string | null
@@ -180,6 +182,8 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
           bank_account_id?: string | null
           cancelled_at?: string | null
           completed_at?: string | null
@@ -200,6 +204,8 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
           bank_account_id?: string | null
           cancelled_at?: string | null
           completed_at?: string | null
@@ -219,6 +225,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_bank_account_id_fkey"
             columns: ["bank_account_id"]

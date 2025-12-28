@@ -16,7 +16,7 @@ import { usePagination } from "@/hooks/use-pagination";
 import { AdminOrdersDebug } from "@/components/debug/admin-orders-debug";
 
 export default function AdminOrdersPage() {
-  const { orders, isLoading, error, updateOrderStatus, updateUserWallet } = useAdminOrders();
+  const { orders, isLoading, error, updateOrderStatus, updateUserWallet, assignOrder, unassignOrder } = useAdminOrders();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
@@ -27,6 +27,8 @@ export default function AdminOrdersPage() {
     setStatusFilter,
     paymentMethodFilter,
     setPaymentMethodFilter,
+    assignmentFilter,
+    setAssignmentFilter,
     searchQuery,
     setSearchQuery,
     dateFilter,
@@ -110,6 +112,8 @@ export default function AdminOrdersPage() {
         setStatusFilter={setStatusFilter}
         paymentMethodFilter={paymentMethodFilter}
         setPaymentMethodFilter={setPaymentMethodFilter}
+        assignmentFilter={assignmentFilter}
+        setAssignmentFilter={setAssignmentFilter}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         dateFilter={dateFilter}
@@ -146,6 +150,8 @@ export default function AdminOrdersPage() {
             orders={currentOrders}
             onEditOrder={handleEditOrder}
             onWalletUpdate={handleWalletUpdate}
+            onAssignOrder={assignOrder}
+            onUnassignOrder={unassignOrder}
           />
 
           {/* Pagination */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,16 +20,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Edit, Wallet, MoreHorizontal, MessageCircle, User, Mail, Phone, Copy, Check } from "lucide-react";
+import { Edit, Wallet, MoreHorizontal, MessageCircle, User, Mail, Phone, Copy, Check, UserCheck, UserX } from "lucide-react";
 import { formatCurrency } from "@/lib/wallet/utils";
 import { Order } from "@/hooks/use-admin-orders";
 import { SendNotificationButton } from "./send-notification-button";
 import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
 
 interface OrdersTableProps {
   orders: Order[];
   onEditOrder: (order: Order) => void;
   onWalletUpdate: (order: Order) => void;
+  onAssignOrder: (orderId: string) => Promise<boolean>;
+  onUnassignOrder: (orderId: string) => Promise<boolean>;
 }
 
 const statusColors: Record<string, string> = {
@@ -44,9 +47,20 @@ const statusColors: Record<string, string> = {
   refunded: "bg-purple-500/10 text-purple-500 border-purple-500/20",
 };
 
-export function OrdersTable({ orders, onEditOrder, onWalletUpdate }: OrdersTableProps) {
+export function OrdersTable({ orders, onEditOrder, onWalletUpdate, onAssignOrder, onUnassignOrder }: OrdersTableProps) {
   const [selectedUser, setSelectedUser] = useState<Order | null>(null);
   const [copiedItems, setCopiedItems] = useState<{ [key: string]: boolean }>({});
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+
+  // Get current user ID
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user?.id || null);
+    };
+    getCurrentUser();
+  }, []);
 
   const copyToClipboard = async (text: string, key: string) => {
     try {
@@ -73,49 +87,77 @@ export function OrdersTable({ orders, onEditOrder, onWalletUpdate }: OrdersTable
     return `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${message}`;
   };
 
-  const ActionsMenu = ({ order }: { order: Order }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => onEditOrder(order)}>
-          <Edit className="mr-2 h-4 w-4" />
-          Edit Order
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onWalletUpdate(order)}>
-          <Wallet className="mr-2 h-4 w-4" />
-          Update Wallet
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => setSelectedUser(order)}>
-          <User className="mr-2 h-4 w-4" />
-          View Customer
-        </DropdownMenuItem>
-        {order.users?.whatsapp_no && (
-          <DropdownMenuItem asChild>
-            <a
-              href={createWhatsAppLink(order)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center"
-            >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              WhatsApp Customer
-            </a>
+  const ActionsMenu = ({ order }: { order: Order }) => {
+    const isAssignedToMe = order.assigned_to === currentUser;
+    const isAssignedToOther = order.assigned_to && order.assigned_to !== currentUser;
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+
+          {/* Assignment Actions */}
+          {!order.assigned_to && (
+            <DropdownMenuItem onClick={() => onAssignOrder(order.id)}>
+              <UserCheck className="mr-2 h-4 w-4" />
+              Assign to Me
+            </DropdownMenuItem>
+          )}
+          {isAssignedToMe && (
+            <DropdownMenuItem onClick={() => onUnassignOrder(order.id)}>
+              <UserX className="mr-2 h-4 w-4" />
+              Unassign Order
+            </DropdownMenuItem>
+          )}
+          {isAssignedToOther && (
+            <DropdownMenuItem disabled>
+              <UserCheck className="mr-2 h-4 w-4 text-orange-500" />
+              Assigned to {order.assigned_admin?.full_name || 'Another Admin'}
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem onClick={() => onEditOrder(order)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Order
           </DropdownMenuItem>
-        )}
-        <DropdownMenuSeparator />
-        <div className="px-0 py-0">
-          <SendNotificationButton order={order} variant="dropdown" />
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+          <DropdownMenuItem onClick={() => onWalletUpdate(order)}>
+            <Wallet className="mr-2 h-4 w-4" />
+            Update Wallet
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setSelectedUser(order)}>
+            <User className="mr-2 h-4 w-4" />
+            View Customer
+          </DropdownMenuItem>
+          {order.users?.whatsapp_no && (
+            <DropdownMenuItem asChild>
+              <a
+                href={createWhatsAppLink(order)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                WhatsApp Customer
+              </a>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <div className="px-0 py-0">
+            <SendNotificationButton order={order} variant="dropdown" />
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
   if (!orders || orders.length === 0) {
     return (
       <Card>
@@ -203,11 +245,36 @@ export function OrdersTable({ orders, onEditOrder, onWalletUpdate }: OrdersTable
             {
               key: "link",
               label: "Link",
-              render: (link: any) => (
-                <span className="max-w-32 truncate text-xs block">
-                  {link === "wallet_funding" ? "Wallet Funding" : link}
-                </span>
-              ),
+              render: (link: any, row: Order) => {
+                if (link === "wallet_funding") {
+                  return (
+                    <span className="text-xs text-muted-foreground">
+                      Wallet Funding
+                    </span>
+                  );
+                }
+
+                return (
+                  <div className="flex items-center gap-2 max-w-32">
+                    <span className="truncate text-xs block">
+                      {link}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard(link, `link_${row.id}`)}
+                      className="h-6 w-6 p-0 flex-shrink-0"
+                      title="Copy link"
+                    >
+                      {copiedItems[`link_${row.id}`] ? (
+                        <Check className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
+                );
+              },
             },
             {
               key: "quantity",
@@ -233,6 +300,29 @@ export function OrdersTable({ orders, onEditOrder, onWalletUpdate }: OrdersTable
                   {status.replace("_", " ").toUpperCase()}
                 </Badge>
               ),
+            },
+            {
+              key: "assigned_admin",
+              label: "Assigned To",
+              render: (_, row: Order) => {
+                if (!row.assigned_to) {
+                  return (
+                    <span className="text-xs text-muted-foreground">
+                      Unassigned
+                    </span>
+                  );
+                }
+
+                const isAssignedToMe = row.assigned_to === currentUser;
+                return (
+                  <div className="flex items-center gap-1">
+                    <UserCheck className={`h-3 w-3 ${isAssignedToMe ? 'text-green-600' : 'text-orange-500'}`} />
+                    <span className={`text-xs ${isAssignedToMe ? 'text-green-600 font-medium' : 'text-orange-500'}`}>
+                      {isAssignedToMe ? 'You' : (row.assigned_admin?.full_name || 'Admin')}
+                    </span>
+                  </div>
+                );
+              },
             },
             {
               key: "created_at",
@@ -263,9 +353,17 @@ export function OrdersTable({ orders, onEditOrder, onWalletUpdate }: OrdersTable
                 <p className="font-medium text-sm">
                   {row.services?.platform || "Wallet Funding"}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {row.users?.full_name} • {row.order_number}
-                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{row.users?.full_name} • {row.order_number}</span>
+                  {row.assigned_to && (
+                    <div className="flex items-center gap-1">
+                      <UserCheck className={`h-3 w-3 ${row.assigned_to === currentUser ? 'text-green-600' : 'text-orange-500'}`} />
+                      <span className={row.assigned_to === currentUser ? 'text-green-600' : 'text-orange-500'}>
+                        {row.assigned_to === currentUser ? 'You' : (row.assigned_admin?.full_name || 'Admin')}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
               <Badge variant="outline" className={`${statusColors[row.status]} text-xs`}>
                 {row.status.replace("_", " ").toUpperCase()}

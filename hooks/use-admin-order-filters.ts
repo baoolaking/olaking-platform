@@ -2,12 +2,25 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Order } from "./use-admin-orders";
+import { createClient } from "@/lib/supabase/client";
 
 export function useAdminOrderFilters(orders: Order[]) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("all");
+  const [assignmentFilter, setAssignmentFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState<string>("all");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Get current user ID for assignment filtering
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id || null);
+    };
+    getCurrentUser();
+  }, []);
 
   const filteredOrders = useMemo(() => {
     let filtered = [...orders];
@@ -20,6 +33,21 @@ export function useAdminOrderFilters(orders: Order[]) {
     // Payment method filter
     if (paymentMethodFilter !== "all") {
       filtered = filtered.filter(order => order.payment_method === paymentMethodFilter);
+    }
+
+    // Assignment filter
+    if (assignmentFilter !== "all") {
+      switch (assignmentFilter) {
+        case "assigned_to_me":
+          filtered = filtered.filter(order => order.assigned_to === currentUserId);
+          break;
+        case "assigned_to_others":
+          filtered = filtered.filter(order => order.assigned_to && order.assigned_to !== currentUserId);
+          break;
+        case "unassigned":
+          filtered = filtered.filter(order => !order.assigned_to);
+          break;
+      }
     }
 
     // Date filter
@@ -56,17 +84,19 @@ export function useAdminOrderFilters(orders: Order[]) {
     }
 
     return filtered;
-  }, [orders, statusFilter, paymentMethodFilter, searchQuery, dateFilter]);
+  }, [orders, statusFilter, paymentMethodFilter, assignmentFilter, searchQuery, dateFilter, currentUserId]);
 
   const clearFilters = () => {
     setStatusFilter("all");
     setPaymentMethodFilter("all");
+    setAssignmentFilter("all");
     setSearchQuery("");
     setDateFilter("all");
   };
 
   const hasActiveFilters = statusFilter !== "all" || 
                           paymentMethodFilter !== "all" || 
+                          assignmentFilter !== "all" ||
                           searchQuery.trim() !== "" || 
                           dateFilter !== "all";
 
@@ -76,6 +106,8 @@ export function useAdminOrderFilters(orders: Order[]) {
     setStatusFilter,
     paymentMethodFilter,
     setPaymentMethodFilter,
+    assignmentFilter,
+    setAssignmentFilter,
     searchQuery,
     setSearchQuery,
     dateFilter,

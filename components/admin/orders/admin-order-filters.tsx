@@ -18,11 +18,13 @@ import {
 } from "@/components/ui/card";
 import { Search, Filter, X } from "lucide-react";
 
-interface AdminOrderFiltersProps {
+export interface AdminOrderFiltersProps {
   statusFilter: string;
   setStatusFilter: (value: string) => void;
   paymentMethodFilter: string;
   setPaymentMethodFilter: (value: string) => void;
+  assignmentFilter: string;
+  setAssignmentFilter: (value: string) => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   dateFilter: string;
@@ -38,6 +40,8 @@ export function AdminOrderFilters({
   setStatusFilter,
   paymentMethodFilter,
   setPaymentMethodFilter,
+  assignmentFilter,
+  setAssignmentFilter,
   searchQuery,
   setSearchQuery,
   dateFilter,
@@ -62,7 +66,7 @@ export function AdminOrderFilters({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
           {/* Search */}
           <div className="space-y-2">
             <Label htmlFor="search">Search</Label>
@@ -94,6 +98,22 @@ export function AdminOrderFilters({
                 <SelectItem value="failed">Failed</SelectItem>
                 <SelectItem value="awaiting_refund">Awaiting Refund</SelectItem>
                 <SelectItem value="refunded">Refunded</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Assignment Filter */}
+          <div className="space-y-2">
+            <Label htmlFor="assignment-filter">Assignment</Label>
+            <Select value={assignmentFilter} onValueChange={setAssignmentFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="All Orders" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Orders</SelectItem>
+                <SelectItem value="assigned_to_me">Assigned to Me</SelectItem>
+                <SelectItem value="assigned_to_others">Assigned to Others</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
               </SelectContent>
             </Select>
           </div>

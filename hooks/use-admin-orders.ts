@@ -21,6 +21,8 @@ export interface Order {
   bank_account_id: string | null;
   payment_verified_at: string | null;
   admin_notes: string | null;
+  assigned_to: string | null;
+  assigned_at: string | null;
   completed_at: string | null;
   cancelled_at: string | null;
   created_at: string;
@@ -35,6 +37,10 @@ export interface Order {
     platform: string;
     service_type: string;
     price_per_1k: number;
+  } | null;
+  assigned_admin?: {
+    username: string;
+    full_name: string;
   } | null;
 }
 
@@ -73,6 +79,10 @@ export function useAdminOrders() {
             platform,
             service_type,
             price_per_1k
+          ),
+          assigned_admin:users!orders_assigned_to_fkey (
+            username,
+            full_name
           )
         `)
         .order("created_at", { ascending: false });
@@ -214,6 +224,72 @@ export function useAdminOrders() {
     }
   };
 
+  const assignOrder = async (orderId: string) => {
+    try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        toast.error("Authentication required");
+        return false;
+      }
+
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          assigned_to: user.id,
+          assigned_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+
+      if (error) {
+        console.error("Error assigning order:", error);
+        toast.error("Failed to assign order");
+        return false;
+      }
+
+      // Refresh orders to get updated data
+      await fetchOrders();
+      toast.success("Order assigned to you successfully");
+      return true;
+    } catch (error) {
+      console.error("Error assigning order:", error);
+      toast.error("Failed to assign order");
+      return false;
+    }
+  };
+
+  const unassignOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          assigned_to: null,
+          assigned_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+
+      if (error) {
+        console.error("Error unassigning order:", error);
+        toast.error("Failed to unassign order");
+        return false;
+      }
+
+      // Refresh orders to get updated data
+      await fetchOrders();
+      toast.success("Order unassigned successfully");
+      return true;
+    } catch (error) {
+      console.error("Error unassigning order:", error);
+      toast.error("Failed to unassign order");
+      return false;
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -225,6 +301,8 @@ export function useAdminOrders() {
     fetchOrders,
     updateOrderStatus,
     updateUserWallet,
+    assignOrder,
+    unassignOrder,
     setOrders,
   };
 }
