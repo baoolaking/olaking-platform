@@ -46,10 +46,10 @@ export function TikTokCoinBanner({
 
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-base sm:text-lg leading-tight">
-              🚀 Get TikTok Coins Instantly!
+              🚀 Get TikTok Coins - No Login Required!
             </h3>
             <p className="text-xs sm:text-sm text-white/90 leading-tight">
-              Best rates • Instant delivery • 24/7 support
+              Direct WhatsApp contact • Best rates • Instant delivery
             </p>
           </div>
 

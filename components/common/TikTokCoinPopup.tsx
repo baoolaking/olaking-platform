@@ -65,7 +65,7 @@ export function TikTokCoinPopup({
             Get TikTok Coins Now!
           </DialogTitle>
           <DialogDescription className="text-sm">
-            Purchase TikTok coins instantly through WhatsApp. Fast, secure, and reliable service.
+            No registration required! Contact us directly on WhatsApp for instant TikTok coin purchases.
           </DialogDescription>
         </DialogHeader>
 
@@ -81,10 +81,10 @@ export function TikTokCoinPopup({
           <div className="text-center space-y-2">
             <h3 className="font-semibold text-base sm:text-lg">💰 Best Rates Available</h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              • Instant delivery<br />
-              • 24/7 support<br />
-              • Secure transactions<br />
-              • Multiple payment options
+              ✅ No login details needed<br />
+              ✅ No email or phone verification<br />
+              ✅ Instant delivery via WhatsApp<br />
+              ✅ 24/7 support & secure transactions
             </p>
           </div>
         </div>
@@ -96,7 +96,7 @@ export function TikTokCoinPopup({
             size="lg"
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            Buy via WhatsApp
+            Contact Us on WhatsApp
           </Button>
           <Button
             variant="outline"

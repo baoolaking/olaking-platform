@@ -39,14 +39,14 @@ export function TikTokCoinQuickAction({ whatsappNumber }: TikTokCoinQuickActionP
             />
             <CardTitle className="text-lg">TikTok Coins</CardTitle>
           </div>
-          <CardDescription>Get coins instantly via WhatsApp</CardDescription>
+          <CardDescription>No login needed - Direct WhatsApp contact</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
             className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
             onClick={handleClick}
           >
-            Buy TikTok Coins
+            Contact on WhatsApp
           </Button>
         </CardContent>
       </div>
