@@ -77,7 +77,6 @@ export default function ServicesPage() {
     <div className="space-y-6">
       {/* TikTok Coin Promotion Banner */}
       <TikTokCoinBanner
-        whatsappNumber={userData?.whatsapp_no || "your-whatsapp-number"}
         className="mb-4"
       />
 

@@ -19,6 +19,7 @@ export function TikTokCoinBanner({
   const [isVisible, setIsVisible] = useState(true);
 
   const handleWhatsAppClick = () => {
+    // Use environment variable by default, fallback to provided number
     const whatsappUrl = getTikTokCoinsWhatsAppUrl(whatsappNumber);
     window.open(whatsappUrl, "_blank");
   };

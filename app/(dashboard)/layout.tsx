@@ -38,7 +38,6 @@ export default async function DashboardLayout({
 
       {/* Floating TikTok Coin Button */}
       <TikTokCoinFloatingButton
-        whatsappNumber={userData?.whatsapp_no || "your-whatsapp-number"}
         position="bottom-right"
       />
     </>

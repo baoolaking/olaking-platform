@@ -1,7 +1,7 @@
 // TikTok Coins Configuration
 export const TIKTOK_COINS_CONFIG = {
-  // Replace with your actual WhatsApp number (include country code without +)
-  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_TIKTOK_COINS, // e.g., "2348123456789"
+  // WhatsApp number from environment variable (remove + sign for WhatsApp URL format)
+  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_TIKTOK_COINS?.replace('+', '') || "2349163313727",
   
   // Default message for TikTok coin purchases
   defaultMessage: "Hi! I'm interested in purchasing TikTok coins. Can you help me?",
@@ -27,7 +27,14 @@ export const TIKTOK_COINS_CONFIG = {
 };
 
 export function getTikTokCoinsWhatsAppUrl(whatsappNumber?: string, customMessage?: string) {
-  const number = whatsappNumber || TIKTOK_COINS_CONFIG.whatsappNumber;
+  // Use provided number, or fallback to config number
+  let number = whatsappNumber || TIKTOK_COINS_CONFIG.whatsappNumber;
+  
+  // Remove + sign if present for WhatsApp URL format
+  if (number?.startsWith('+')) {
+    number = number.substring(1);
+  }
+  
   const message = customMessage || TIKTOK_COINS_CONFIG.defaultMessage;
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }

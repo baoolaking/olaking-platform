@@ -25,7 +25,6 @@ export default function LandingPage() {
       {/* TikTok Coin Popup - shows after 3 seconds */}
       <TikTokCoinPopup
         showOnMount={true}
-        whatsappNumber={undefined} // Will use default from config
       />
     </>
   );

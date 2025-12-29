@@ -60,9 +60,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* TikTok Coin Banner - Prominent at the top */}
-      <TikTokCoinBanner
-        whatsappNumber={userData.whatsapp_no || "your-whatsapp-number"}
-      />
+      <TikTokCoinBanner />
 
       {/* Header */}
       <div>
@@ -133,7 +131,7 @@ export default async function DashboardPage() {
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* TikTok Coins Quick Action */}
-        <TikTokCoinQuickAction whatsappNumber={userData.whatsapp_no} />
+        <TikTokCoinQuickAction />
 
         {/* Existing Quick Actions */}
         <Card>

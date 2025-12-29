@@ -39,6 +39,7 @@ export function TikTokCoinPopup({
   }, [showOnMount, autoShowDelay]);
 
   const handleWhatsAppClick = () => {
+    // Use environment variable by default, fallback to provided number
     const whatsappUrl = getTikTokCoinsWhatsAppUrl(whatsappNumber);
     window.open(whatsappUrl, "_blank");
     setIsOpen(false);

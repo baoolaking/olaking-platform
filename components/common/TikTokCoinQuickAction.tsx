@@ -17,6 +17,7 @@ interface TikTokCoinQuickActionProps {
 
 export function TikTokCoinQuickAction({ whatsappNumber }: TikTokCoinQuickActionProps) {
   const handleClick = () => {
+    // Use environment variable by default, fallback to provided number
     const whatsappUrl = getTikTokCoinsWhatsAppUrl(whatsappNumber);
     window.open(whatsappUrl, "_blank");
   };

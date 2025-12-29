@@ -4,17 +4,21 @@ This document explains how to configure and customize the TikTok coins promotion
 
 ## Configuration
 
-The TikTok coins feature is configured in `lib/config/tiktok-coins.ts`. Update the following settings:
+### Environment Variable Setup
+The TikTok coins feature uses the `NEXT_PUBLIC_WHATSAPP_TIKTOK_COINS` environment variable for the WhatsApp number. 
 
-### WhatsApp Number
-Replace `"your-whatsapp-number"` with your actual WhatsApp number (include country code without the + sign):
-
-```typescript
-whatsappNumber: "2348123456789", // Example for Nigeria
+**In your `.env.local` file:**
+```env
+NEXT_PUBLIC_WHATSAPP_TIKTOK_COINS=+2349163313727
 ```
 
+The system automatically:
+- Removes the `+` sign for WhatsApp URL compatibility
+- Uses this number for all TikTok coin related WhatsApp contacts
+- Falls back to a default number if the environment variable is not set
+
 ### Message Customization
-You can customize the default message sent to WhatsApp:
+You can customize the default message in `lib/config/tiktok-coins.ts`:
 
 ```typescript
 defaultMessage: "Hi! I'm interested in purchasing TikTok coins. Can you help me?",
@@ -128,17 +132,19 @@ popup: {
 
 ## Testing
 
-1. Update the WhatsApp number in the configuration
-2. Test the popup on the landing page
-3. Check the dashboard banner and quick action
+1. **Set Environment Variable**: Ensure `NEXT_PUBLIC_WHATSAPP_TIKTOK_COINS` is set in your `.env.local` file
+2. **Test the popup** on the landing page
+3. **Check the dashboard banner** and quick action
 4. **Test floating button multiple times** (click, close, click again)
 5. **Test on mobile devices** for responsive design
-6. Verify WhatsApp integration by clicking any TikTok coin button
+6. **Verify WhatsApp integration** by clicking any TikTok coin button - should open WhatsApp with the configured number
 
 ## Notes
 
-- The feature uses the user's WhatsApp number from their profile when available
-- Falls back to the configured default number if user's number is not available
+- **Centralized Configuration**: All TikTok coin WhatsApp contacts use the `NEXT_PUBLIC_WHATSAPP_TIKTOK_COINS` environment variable
+- **Automatic Formatting**: The system handles `+` sign removal for WhatsApp URL compatibility
+- **Fallback Support**: If environment variable is not set, falls back to a default number
+- **No User Data Dependency**: Components no longer depend on user's personal WhatsApp number
 - All components are fully responsive and optimized for mobile devices
 - The floating button now properly handles state management for repeated use
 - The TikTok coin image should be placed at `public/images/tiktok-coin.png`
