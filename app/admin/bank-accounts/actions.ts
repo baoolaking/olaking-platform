@@ -136,6 +136,29 @@ export async function deleteBankAccount(id: string) {
     .eq("id", id)
     .single();
 
+  // Check if there are any orders referencing this bank account
+  const { data: referencingOrders, error: checkError } = await supabase
+    .from("orders")
+    .select("id, order_number, status")
+    .eq("bank_account_id", id);
+
+  if (checkError) {
+    throw new Error(`Failed to check for referencing orders: ${checkError.message}`);
+  }
+
+  // If there are orders referencing this bank account, update them to remove the reference
+  if (referencingOrders && referencingOrders.length > 0) {
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update({ bank_account_id: null })
+      .eq("bank_account_id", id);
+
+    if (updateError) {
+      throw new Error(`Failed to update referencing orders: ${updateError.message}`);
+    }
+  }
+
+  // Now delete the bank account
   const { error } = await supabase.from("bank_accounts").delete().eq("id", id);
 
   if (error) {

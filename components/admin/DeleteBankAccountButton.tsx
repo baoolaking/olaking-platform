@@ -13,7 +13,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { deleteBankAccount } from "@/app/admin/bank-accounts/actions";
 import { toast } from "sonner";
 
@@ -35,7 +35,7 @@ export function DeleteBankAccountButton({
     startTransition(async () => {
       try {
         await deleteBankAccount(id);
-        toast.success("Bank account deleted successfully!");
+        toast.success("Bank account deleted successfully! Any associated orders have been updated.");
         setOpen(false);
         onSuccess?.();
       } catch (error) {
@@ -50,10 +50,14 @@ export function DeleteBankAccountButton({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={(newOpen) => !isPending && setOpen(newOpen)}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
-          <Trash2 className="w-4 h-4" />
+        <Button variant="destructive" size="sm" disabled={isPending}>
+          {isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Trash2 className="w-4 h-4" />
+          )}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -61,8 +65,16 @@ export function DeleteBankAccountButton({
           <AlertDialogTitle>Delete Bank Account</AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to delete the bank account for{" "}
-            <span className="font-semibold">{bankName}</span>? This action
-            cannot be undone.
+            <span className="font-semibold">{bankName}</span>?
+            <br />
+            <br />
+            <span className="text-sm text-muted-foreground">
+              Note: If there are orders associated with this bank account,
+              they will be updated to remove the bank account reference before deletion.
+            </span>
+            <br />
+            <br />
+            This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -72,7 +84,14 @@ export function DeleteBankAccountButton({
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isPending ? "Deleting..." : "Delete"}
+            {isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
