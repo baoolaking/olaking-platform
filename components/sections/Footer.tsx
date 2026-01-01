@@ -29,7 +29,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>WhatsApp: +234 901 799 2518</li>
               <li>WhatsApp: +234 916 331 3727</li>
-              <li>Email: support@olaking.com</li>
+              <li>Email: baoolakingglobalenterprises@gmail.com</li>
             </ul>
           </div>
         </div>

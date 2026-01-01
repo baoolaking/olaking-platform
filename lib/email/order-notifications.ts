@@ -111,7 +111,7 @@ function getEmailTemplate(status: string, orderData: OrderEmailData): { subject:
               
               <div class="footer">
                 <p>Thank you for choosing BAO OLAKING!</p>
-                <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'support@baoolaking.com'}</p>
+                <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'baoolakingglobalenterprises@gmail.com'}</p>
               </div>
             </div>
           </body>
@@ -173,7 +173,7 @@ function getEmailTemplate(status: string, orderData: OrderEmailData): { subject:
               
               <div class="footer">
                 <p>Thank you for choosing BAO OLAKING! We appreciate your business.</p>
-                <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'support@baoolaking.com'}</p>
+                <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'baoolakingglobalenterprises@gmail.com'}</p>
               </div>
             </div>
           </body>
@@ -236,7 +236,7 @@ function getEmailTemplate(status: string, orderData: OrderEmailData): { subject:
               
               <div class="footer">
                 <p>We apologize for any inconvenience. Our team is working to resolve this quickly.</p>
-                <p>Need immediate help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'support@baoolaking.com'}</p>
+                <p>Need immediate help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'baoolakingglobalenterprises@gmail.com'}</p>
               </div>
             </div>
           </body>
@@ -298,7 +298,7 @@ function getEmailTemplate(status: string, orderData: OrderEmailData): { subject:
               
               <div class="footer">
                 <p>Thank you for your patience while we process your refund.</p>
-                <p>Questions? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'support@baoolaking.com'}</p>
+                <p>Questions? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'baoolakingglobalenterprises@gmail.com'}</p>
               </div>
             </div>
           </body>
@@ -359,7 +359,7 @@ function getEmailTemplate(status: string, orderData: OrderEmailData): { subject:
               
               <div class="footer">
                 <p>Thank you for your understanding. We hope to serve you better in the future!</p>
-                <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'support@baoolaking.com'}</p>
+                <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'baoolakingglobalenterprises@gmail.com'}</p>
               </div>
             </div>
           </body>
@@ -412,7 +412,7 @@ function getEmailTemplate(status: string, orderData: OrderEmailData): { subject:
               
               <div class="footer">
                 <p>Thank you for choosing BAO OLAKING!</p>
-                <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'support@baoolaking.com'}</p>
+                <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'baoolakingglobalenterprises@gmail.com'}</p>
               </div>
             </div>
           </body>
