@@ -1,24 +1,15 @@
--- Seed Initial Platform Data
--- Run this after setting up your super admin account
+-- Update Services Enum Script
+-- This script adds the new comprehensive service types to your database
+-- Run this in your Supabase SQL editor or via psql
 
--- 1. Insert Admin Settings (key/value schema)
-INSERT INTO admin_settings (setting_key, setting_value, description) VALUES
-  ('platform_name', 'Olaking', 'Platform display name'),
-  ('support_email', 'support@olaking.store', 'Support contact email'),
-  ('support_whatsapp', '+234XXXXXXXXXX', 'Primary WhatsApp support number'),
-  ('auto_cancel_hours', '24', 'Hours before auto-cancelling unpaid orders'),
-  ('payment_verification_hours', '2', 'Hours allowed for payment verification'),
-  ('is_maintenance', 'false', 'Maintenance mode flag'),
-  ('maintenance_message', 'We are currently undergoing maintenance. Please check back soon.', 'Maintenance notice message')
-ON CONFLICT (setting_key) DO NOTHING;
+-- First, let's see what services currently exist
+SELECT platform, service_type, COUNT(*) as count 
+FROM services 
+GROUP BY platform, service_type 
+ORDER BY platform, service_type;
 
--- 2. Insert Sample Bank Accounts (replace with real bank details)
-INSERT INTO bank_accounts (bank_name, account_name, account_number, is_active) VALUES
-  ('GTBank', 'Olaking Limited', '0123456789', true),
-  ('Access Bank', 'Olaking Limited', '0987654321', true)
-ON CONFLICT DO NOTHING;
-
--- 3. Insert Sample Services with comprehensive service types
+-- Add the new comprehensive services
+-- Note: This uses ON CONFLICT DO NOTHING to avoid duplicates
 INSERT INTO services (
   platform,
   service_type,
@@ -90,12 +81,16 @@ INSERT INTO services (
   ('telegram', 'channel/group members', 'Telegram channel/group members', 3500, 2450, 3500, 100, 50000, '1-72 hours', true)
 ON CONFLICT DO NOTHING;
 
--- 4. Verify the data
-SELECT 'Admin Settings' as table_name, COUNT(*) as count FROM admin_settings
-UNION ALL
-SELECT 'Bank Accounts', COUNT(*) FROM bank_accounts
-UNION ALL
-SELECT 'Services', COUNT(*) FROM services;
+-- Verify the new services were added
+SELECT 
+  platform, 
+  COUNT(*) as total_services,
+  COUNT(CASE WHEN is_active = true THEN 1 END) as active_services
+FROM services 
+GROUP BY platform 
+ORDER BY platform;
 
--- Success message
-SELECT 'Platform data seeded successfully!' as status;
+-- Show all services by platform
+SELECT platform, service_type, high_quality_price_per_1k, low_quality_price_per_1k, is_active
+FROM services 
+ORDER BY platform, service_type;

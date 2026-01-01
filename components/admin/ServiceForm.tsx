@@ -41,27 +41,64 @@ const PLATFORMS = [
 ];
 
 const SERVICE_TYPES_BY_PLATFORM: Record<string, string[]> = {
-  tiktok: ["Followers", "Likes", "Views", "Comments", "Shares", "Hearts"],
-  instagram: [
+  tiktok: [
+    "Coin",
     "Followers",
-    "Likes",
     "Views",
-    "Comments",
-    "Stories Views",
-    "Saves",
-  ],
-  facebook: ["Followers", "Likes", "Views", "Comments", "Shares", "Page Likes"],
-  youtube: [
-    "Subscribers",
-    "Views",
+    "Video Comments",
+    "Add to Favorites",
     "Likes",
-    "Comments",
-    "Watch Time",
     "Shares",
+    "Live Views"
   ],
-  x: ["Followers", "Likes", "Retweets", "Comments", "Impressions", "Replies"],
-  telegram: ["Members", "Views", "Reactions", "Comments", "Subscribers"],
-  whatsapp: ["Followers", "Views"],
+  instagram: [
+    "Save Post",
+    "Page Follow",
+    "Post Likes",
+    "Post Repost",
+    "Post Comments",
+    "Post Views",
+    "Share to Story",
+    "Reel Sound Use",
+    "Vote"
+  ],
+  facebook: [
+    "Page Like",
+    "Video View",
+    "Group Join",
+    "Video Share",
+    "Post Comments",
+    "Post Likes",
+    "Post Share",
+    "Post Review",
+    "Page Follow"
+  ],
+  youtube: [
+    "Video Like",
+    "Video View",
+    "Video Share",
+    "Video Comments",
+    "Channel Subscribe",
+    "5 Min Watch Hour"
+  ],
+  x: [
+    "Repost with Quote",
+    "Tweet Repost",
+    "Tweet Comments",
+    "Tweet Like",
+    "Page Follow",
+    "Tweet Views"
+  ],
+  whatsapp: [
+    "Channel Post Like",
+    "Community",
+    "Group",
+    "Contact Save",
+    "Channel Follow"
+  ],
+  telegram: [
+    "Channel/Group Members"
+  ],
 };
 
 interface ServiceFormProps {

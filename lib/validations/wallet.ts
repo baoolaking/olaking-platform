@@ -45,49 +45,62 @@ export type AdminWalletActionInput = z.infer<typeof adminWalletActionSchema>;
 // Platform-specific service type enums for validation
 export const platformServiceTypes = {
   tiktok: [
-    "followers",
-    "video_likes", 
-    "video_views",
-    "video_shares",
-    "custom_comments",
-    "video_saves",
-    "coins_purchase"
+    "coin",
+    "followers", 
+    "views",
+    "video comments",
+    "add to favorites",
+    "likes",
+    "shares",
+    "live views"
   ],
   instagram: [
-    "followers",
-    "post_likes",
-    "video_reel_views", 
-    "custom_comments",
-    "story_views"
+    "save post",
+    "page follow",
+    "post likes",
+    "post repost",
+    "post comments",
+    "post views",
+    "share to story",
+    "reel sound use",
+    "vote"
   ],
   facebook: [
-    "followers",
-    "page_likes",
-    "video_reel_views",
-    "post_shares", 
-    "post_likes"
+    "page like",
+    "video view",
+    "group join",
+    "video share",
+    "post comments",
+    "post likes",
+    "post share",
+    "post review",
+    "page follow"
   ],
   youtube: [
-    "subscribers",
-    "likes",
-    "video_views",
-    "custom_comments"
+    "video like",
+    "video view",
+    "video share",
+    "video comments",
+    "channel subscribe",
+    "5 min watch hour"
   ],
   x: [
-    "followers",
-    "comments", 
-    "likes",
-    "repost"
-  ],
-  telegram: [
-    "group_channel_members",
-    "post_views_last_20_days",
-    "post_views_specific",
-    "reaction_specific",
-    "reaction_last_20_days"
+    "repost with quote",
+    "tweet repost",
+    "tweet comments",
+    "tweet like",
+    "page follow",
+    "tweet views"
   ],
   whatsapp: [
-    "group_members"
+    "channel post like",
+    "community",
+    "group",
+    "contact save",
+    "channel follow"
+  ],
+  telegram: [
+    "channel/group members"
   ]
 } as const;
 
