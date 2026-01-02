@@ -499,6 +499,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      process_refund: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_description: string
+          p_order_id: string
+          p_reference: string
+          p_created_by: string
+        }
+        Returns: number
+      }
       upgrade_user_role: {
         Args: {
           p_email: string

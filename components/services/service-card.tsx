@@ -50,16 +50,6 @@ export function ServiceCard({ service, onSelect }: ServiceCardProps) {
           <Badge variant="secondary">
             {formatPlatformName(service.platform)}
           </Badge>
-          {!isTikTokCoins && (
-            <div className="flex flex-col gap-1">
-              <Badge variant="outline" className="text-xs">
-                H: {formatCurrency(service.high_quality_price_per_1k || service.price_per_1k)}/1k
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                L: {formatCurrency(service.low_quality_price_per_1k || service.price_per_1k * 0.7)}/1k
-              </Badge>
-            </div>
-          )}
           {isTikTokCoins && (
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
               WhatsApp

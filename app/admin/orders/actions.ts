@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { logAdminAction, extractAuditFields } from "@/lib/audit/logAdminAction";
+import { logAdminAction, extractAuditFields, logRefundOperation, logRefundError } from "@/lib/audit/logAdminAction";
 import { sendOrderStatusNotification } from "@/lib/email/order-notifications";
+import { processOrderRefund } from "@/lib/wallet/refund-service";
 
 export async function updateOrderStatus(
   orderId: string,
@@ -194,49 +195,188 @@ export async function updateOrderStatus(
     }
   }
 
+  // Handle failed orders - automatically process refund (only for service type orders, not wallet funding)
+  if (newStatus === "failed" && currentOrder.status !== "failed" && currentOrder.link !== "wallet_funding") {
+    try {
+      console.log(`Processing refund for failed service order ${orderId}: ₦${currentOrder.total_price}`);
+      
+      // Process the refund using the refund service
+      const refundResult = await processOrderRefund(currentOrder, currentUser.id);
+      
+      if (!refundResult.success) {
+        // Log the refund error with detailed information
+        await logRefundError({
+          orderId,
+          refundAmount: currentOrder.total_price,
+          error: refundResult.error || "Failed to process refund",
+          context: {
+            refund_result: refundResult,
+            order_details: {
+              user_id: currentOrder.user_id,
+              payment_method: currentOrder.payment_method,
+              created_at: currentOrder.created_at,
+            },
+          },
+          adminNotes,
+          oldOrderStatus: currentOrder.status,
+          revertedOrderStatus: currentOrder.status, // Will be reverted below
+        });
+
+        throw new Error(refundResult.error || "Failed to process refund");
+      }
+
+      // Log successful refund operation
+      await logRefundOperation({
+        orderId,
+        refundAmount: currentOrder.total_price,
+        transactionId: refundResult.transactionId,
+        newBalance: refundResult.newBalance,
+        adminNotes,
+        oldOrderStatus: currentOrder.status,
+        newOrderStatus: newStatus,
+      });
+
+      console.log(`✅ Refund processed successfully for order ${orderId}`, {
+        transactionId: refundResult.transactionId,
+        newBalance: refundResult.newBalance
+      });
+      
+      // Revalidate pages that show wallet balance
+      revalidatePath("/dashboard");
+      revalidatePath("/dashboard/wallet");
+      revalidatePath("/dashboard/services");
+      revalidatePath("/dashboard/profile");
+      
+    } catch (refundError) {
+      console.error("Refund processing error:", refundError);
+      
+      // Log the refund error if not already logged
+      if (refundError instanceof Error && !refundError.message.includes("Failed to process refund")) {
+        await logRefundError({
+          orderId,
+          refundAmount: currentOrder.total_price,
+          error: refundError.message,
+          context: {
+            error_type: 'unexpected_refund_error',
+            stack_trace: refundError.stack,
+          },
+          adminNotes,
+          oldOrderStatus: currentOrder.status,
+          revertedOrderStatus: currentOrder.status,
+        });
+      }
+      
+      // Revert the order status update
+      await adminClient
+        .from("orders")
+        .update({
+          status: currentOrder.status,
+          admin_notes: `Failed to process refund: ${refundError instanceof Error ? refundError.message : 'Unknown error'}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", orderId);
+      
+      throw new Error(`Order status update failed due to refund error: ${refundError instanceof Error ? refundError.message : 'Unknown error'}`);
+    }
+  } else if (newStatus === "failed" && currentOrder.status !== "failed" && currentOrder.link === "wallet_funding") {
+    // Log wallet funding order failure (no refund processing needed)
+    console.log(`Wallet funding order ${orderId} marked as failed - no refund processing required`);
+  }
+
   // Send email notification to user if status changed
   if (newStatus !== currentOrder.status) {
     try {
-      await sendOrderStatusNotification(newStatus, {
-        orderId: orderId,
-        userEmail: currentOrder.users.email,
-        userName: currentOrder.users.full_name || 'Customer',
-        orderDetails: {
-          platform: currentOrder.services.platform,
-          serviceType: currentOrder.services.service_type,
-          quantity: currentOrder.quantity,
-          totalPrice: currentOrder.total_price,
-          link: currentOrder.link,
-          paymentMethod: currentOrder.payment_method,
-        },
-        adminNotes: adminNotes,
-      });
-      
-      console.log(`📧 Email notification sent for order ${orderId} status change: ${currentOrder.status} → ${newStatus}`);
+      // Use enhanced failed order notification for failed orders
+      if (newStatus === "failed") {
+        const { sendFailedOrderNotification, createFailedOrderEmailData } = await import("@/lib/email/order-notifications");
+        
+        const failedOrderData = createFailedOrderEmailData({
+          orderId: orderId,
+          userEmail: currentOrder.users.email,
+          userName: currentOrder.users.full_name || 'Customer',
+          orderDetails: {
+            platform: currentOrder.services.platform,
+            serviceType: currentOrder.services.service_type,
+            quantity: currentOrder.quantity,
+            totalPrice: currentOrder.total_price,
+            link: currentOrder.link,
+            paymentMethod: currentOrder.payment_method,
+          },
+          adminNotes: adminNotes,
+        }, currentOrder.total_price);
+        
+        const emailResult = await sendFailedOrderNotification(failedOrderData);
+        
+        if (emailResult.success) {
+          console.log(`📧 Enhanced failed order notification sent for order ${orderId}`);
+        } else {
+          throw new Error(emailResult.error || 'Failed to send enhanced failed order notification');
+        }
+      } else {
+        // Use standard notification for other status changes
+        await sendOrderStatusNotification(newStatus, {
+          orderId: orderId,
+          userEmail: currentOrder.users.email,
+          userName: currentOrder.users.full_name || 'Customer',
+          orderDetails: {
+            platform: currentOrder.services.platform,
+            serviceType: currentOrder.services.service_type,
+            quantity: currentOrder.quantity,
+            totalPrice: currentOrder.total_price,
+            link: currentOrder.link,
+            paymentMethod: currentOrder.payment_method,
+          },
+          adminNotes: adminNotes,
+        });
+        
+        console.log(`📧 Email notification sent for order ${orderId} status change: ${currentOrder.status} → ${newStatus}`);
+      }
     } catch (emailError) {
       console.error(`Failed to send email notification for order ${orderId}:`, emailError);
+      
+      // Log email failure with detailed context
+      await logAdminAction({
+        action: "EMAIL_NOTIFICATION_FAILED",
+        entityType: "order",
+        entityId: orderId,
+        errorDetails: {
+          error: emailError instanceof Error ? emailError.message : 'Unknown email error',
+          context: {
+            email_type: newStatus === "failed" ? 'failed_order_notification' : 'order_status_notification',
+            recipient: currentOrder.users.email,
+            order_status_change: `${currentOrder.status} → ${newStatus}`,
+            admin_notes: adminNotes,
+          },
+        },
+      });
+      
       // Don't fail the entire operation if email fails
     }
   }
 
-  // Log the admin action
-  await logAdminAction({
-    action: "UPDATE_ORDER_STATUS",
-    entityType: "order",
-    entityId: orderId,
-    oldValues: await extractAuditFields(currentOrder, [
-      "status",
-      "admin_notes",
-      "completed_at",
-      "payment_verified_at"
-    ]),
-    newValues: await extractAuditFields(updateData, [
+  // Log the admin action (skip for failed orders as they're logged in refund processing)
+  if (newStatus !== "failed") {
+    const auditAction = "UPDATE_ORDER_STATUS";
+    const auditNewValues = await extractAuditFields(updateData, [
       "status", 
       "admin_notes",
       "completed_at",
       "payment_verified_at"
-    ]),
-  });
+    ]);
+
+    await logAdminAction({
+      action: auditAction,
+      entityType: "order",
+      entityId: orderId,
+      oldValues: await extractAuditFields(currentOrder, [
+        "status",
+        "admin_notes",
+        "completed_at",
+        "payment_verified_at"
+      ]),
+      newValues: auditNewValues,
+    });
+  }
 
   revalidatePath("/admin/orders");
   

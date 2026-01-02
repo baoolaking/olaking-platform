@@ -15,23 +15,83 @@ export interface OrderEmailData {
   adminNotes?: string;
 }
 
+export interface FailedOrderEmailData extends OrderEmailData {
+  refundAmount: number;
+  refundMethod: 'wallet' | 'bank_transfer';
+  estimatedRefundTime: string;
+}
+
 /**
- * Send order status change notification to user
+ * Send order status change notification to user with enhanced error handling
  */
 export async function sendOrderStatusNotification(
   status: string,
   orderData: OrderEmailData
-) {
-  const emailService = getEmailService();
-  
-  const { subject, html } = getEmailTemplate(status, orderData);
-  
-  await emailService.sendEmail({
-    to: orderData.userEmail,
-    subject,
-    html,
-    from: process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL || "noreply@baoolaking.com",
-  });
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const emailService = getEmailService();
+    
+    const { subject, html } = getEmailTemplate(status, orderData);
+    
+    await emailService.sendEmail({
+      to: orderData.userEmail,
+      subject,
+      html,
+      from: process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL || "noreply@baoolaking.com",
+    });
+
+    console.log(`📧 Email notification sent successfully for order ${orderData.orderId} (status: ${status})`);
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown email error';
+    console.error(`❌ Failed to send email notification for order ${orderData.orderId}:`, errorMessage);
+    
+    // Log detailed error information for debugging
+    console.error('Email error details:', {
+      orderId: orderData.orderId,
+      status,
+      userEmail: orderData.userEmail,
+      error: errorMessage
+    });
+    
+    return { success: false, error: errorMessage };
+  }
+}
+
+/**
+ * Send failed order notification with refund information
+ */
+export async function sendFailedOrderNotification(
+  orderData: FailedOrderEmailData
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const emailService = getEmailService();
+    
+    const { subject, html } = getFailedOrderEmailTemplate(orderData);
+    
+    await emailService.sendEmail({
+      to: orderData.userEmail,
+      subject,
+      html,
+      from: process.env.RESEND_FROM_EMAIL || process.env.FROM_EMAIL || "noreply@baoolaking.com",
+    });
+
+    console.log(`📧 Failed order notification sent successfully for order ${orderData.orderId}`);
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown email error';
+    console.error(`❌ Failed to send failed order notification for order ${orderData.orderId}:`, errorMessage);
+    
+    // Log detailed error information for debugging
+    console.error('Failed order email error details:', {
+      orderId: orderData.orderId,
+      userEmail: orderData.userEmail,
+      refundAmount: orderData.refundAmount,
+      error: errorMessage
+    });
+    
+    return { success: false, error: errorMessage };
+  }
 }
 
 /**
@@ -183,60 +243,65 @@ function getEmailTemplate(status: string, orderData: OrderEmailData): { subject:
 
     case "failed":
       return {
-        subject: `Order Issue - ${orderId} | BAO OLAKING`,
+        subject: `Order Refunded - ${orderId} | BAO OLAKING`,
         html: `
           <!DOCTYPE html>
           <html>
           <head>
             <meta charset="utf-8">
-            <title>Order Issue</title>
+            <title>Order Refunded</title>
             ${baseStyle}
           </head>
           <body>
             <div class="container">
-              <div class="header" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">
-                <h1 style="margin: 0;">⚠️ Order Issue</h1>
-                <p style="margin: 10px 0 0 0; opacity: 0.9;">There was an issue with your order</p>
+              <div class="header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                <h1 style="margin: 0;">💰 Order Refunded</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Your order has been refunded automatically</p>
               </div>
               
               <div class="content">
                 <p>Hi ${userName},</p>
                 
-                <p>We encountered an issue while processing your order. Our team is working to resolve this and will update you shortly.</p>
+                <p>We encountered an issue with your order and have automatically processed a refund to your wallet. The refund amount is now available for immediate use.</p>
                 
                 <div class="order-details">
-                  <h3 style="margin-top: 0; color: #495057;">📋 Order Details</h3>
+                  <h3 style="margin-top: 0; color: #495057;">📋 Order & Refund Details</h3>
                   <ul style="list-style: none; padding: 0;">
                     <li><strong>Order ID:</strong> ${orderId}</li>
                     <li><strong>Service:</strong> ${formatServiceName(orderDetails.platform, orderDetails.serviceType)}</li>
-                    <li><strong>Quantity:</strong> ${orderDetails.quantity.toLocaleString()}</li>
-                    <li><strong>Target URL:</strong> ${orderDetails.link}</li>
-                    <li><strong>Status:</strong> <span class="status-badge" style="background: #dc3545; color: white;">Issue Detected</span></li>
+                    <li><strong>Original Amount:</strong> <span class="amount">₦${orderDetails.totalPrice.toLocaleString()}</span></li>
+                    <li><strong>Refund Amount:</strong> <span class="amount">₦${orderDetails.totalPrice.toLocaleString()}</span></li>
+                    <li><strong>Refund Method:</strong> Wallet Credit</li>
+                    <li><strong>Status:</strong> <span class="status-badge" style="background: #28a745; color: white;">Refunded</span></li>
                   </ul>
                 </div>
                 
                 ${adminNotes ? `
                 <div style="background: #f8d7da; padding: 15px; border-radius: 6px; border-left: 4px solid #dc3545;">
-                  <p style="margin: 0;"><strong>📝 Issue Details:</strong> ${adminNotes}</p>
+                  <p style="margin: 0;"><strong>📝 Reason for Refund:</strong> ${adminNotes}</p>
                 </div>
                 ` : ''}
                 
-                <p><strong>What happens next?</strong></p>
+                <div style="background: #d4edda; padding: 15px; border-radius: 6px; border-left: 4px solid #28a745; margin: 20px 0;">
+                  <p style="margin: 0;"><strong>✅ Refund Completed:</strong> The full amount has been credited to your wallet and is available for immediate use on new orders.</p>
+                </div>
+                
+                <p><strong>What's next?</strong></p>
                 <ul>
-                  <li>Our support team will investigate the issue</li>
-                  <li>We'll either retry the order or process a refund</li>
-                  <li>You'll receive an update within 24 hours</li>
-                  <li>If payment was made, it will be refunded if we cannot complete the order</li>
+                  <li>Your wallet balance has been updated with the refund amount</li>
+                  <li>You can place new orders immediately using your wallet balance</li>
+                  <li>Contact our support team if you have any questions</li>
                 </ul>
                 
                 <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/orders" class="btn" style="background: #dc3545;">View Order Details</a>
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/wallet" class="btn" style="background: #28a745;">Check Wallet Balance</a>
+                  <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/services" class="btn" style="background: #007bff; margin-left: 10px;">Browse Services</a>
                 </div>
               </div>
               
               <div class="footer">
-                <p>We apologize for any inconvenience. Our team is working to resolve this quickly.</p>
-                <p>Need immediate help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'baoolakingglobalenterprises@gmail.com'}</p>
+                <p>We apologize for any inconvenience. Thank you for your understanding!</p>
+                <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'baoolakingglobalenterprises@gmail.com'}</p>
               </div>
             </div>
           </body>
@@ -432,4 +497,132 @@ function formatServiceName(platform: string, serviceType: string): string {
   ).join(' ');
   
   return `${platformName} ${serviceName}`;
+}
+
+/**
+ * Get enhanced email template for failed orders with refund information
+ */
+function getFailedOrderEmailTemplate(orderData: FailedOrderEmailData): { subject: string; html: string } {
+  const { orderId, userName, orderDetails, adminNotes, refundAmount, refundMethod, estimatedRefundTime } = orderData;
+  
+  const baseStyle = `
+    <style>
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px 20px; border-radius: 8px 8px 0 0; text-align: center; }
+      .content { background: white; padding: 30px 20px; border: 1px solid #e9ecef; border-top: none; }
+      .order-details { background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; }
+      .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+      .amount { font-size: 18px; font-weight: bold; color: #28a745; }
+      .footer { background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px; text-align: center; font-size: 12px; color: #6c757d; }
+      .btn { display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 10px 5px; }
+      .btn:hover { background: #0056b3; }
+      .refund-highlight { background: #d4edda; padding: 15px; border-radius: 6px; border-left: 4px solid #28a745; margin: 20px 0; }
+      .timeline-info { background: #e7f3ff; padding: 15px; border-radius: 6px; border-left: 4px solid #007bff; margin: 20px 0; }
+    </style>
+  `;
+
+  return {
+    subject: `Order Refunded - ${orderId} | BAO OLAKING`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Order Refunded</title>
+        ${baseStyle}
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0;">💰 Order Refunded</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Your order has been refunded automatically</p>
+          </div>
+          
+          <div class="content">
+            <p>Hi ${userName},</p>
+            
+            <p>We encountered an issue with your order and have automatically processed a refund. The refund has been processed according to your original payment method.</p>
+            
+            <div class="order-details">
+              <h3 style="margin-top: 0; color: #495057;">📋 Order & Refund Details</h3>
+              <ul style="list-style: none; padding: 0;">
+                <li><strong>Order ID:</strong> ${orderId}</li>
+                <li><strong>Service:</strong> ${formatServiceName(orderDetails.platform, orderDetails.serviceType)}</li>
+                <li><strong>Quantity:</strong> ${orderDetails.quantity.toLocaleString()}</li>
+                <li><strong>Original Amount:</strong> <span class="amount">₦${orderDetails.totalPrice.toLocaleString()}</span></li>
+                <li><strong>Refund Amount:</strong> <span class="amount">₦${refundAmount.toLocaleString()}</span></li>
+                <li><strong>Refund Method:</strong> ${refundMethod === 'wallet' ? 'Wallet Credit' : 'Bank Transfer'}</li>
+                <li><strong>Status:</strong> <span class="status-badge" style="background: #28a745; color: white;">Refunded</span></li>
+              </ul>
+            </div>
+            
+            ${adminNotes ? `
+            <div style="background: #f8d7da; padding: 15px; border-radius: 6px; border-left: 4px solid #dc3545;">
+              <p style="margin: 0;"><strong>📝 Reason for Refund:</strong> ${adminNotes}</p>
+            </div>
+            ` : ''}
+            
+            <div class="refund-highlight">
+              <p style="margin: 0;"><strong>✅ Refund Processed:</strong> Your refund of ₦${refundAmount.toLocaleString()} has been processed successfully.</p>
+            </div>
+            
+            <div class="timeline-info">
+              <p style="margin: 0;"><strong>⏰ Refund Timeline:</strong> ${estimatedRefundTime}</p>
+            </div>
+            
+            <p><strong>What's next?</strong></p>
+            <ul>
+              <li>${refundMethod === 'wallet' ? 'Your wallet balance has been updated and is available for immediate use' : 'The refund will appear in your bank account within the specified timeline'}</li>
+              <li>You can place new orders anytime from your dashboard</li>
+              <li>Contact our support team if you have any questions about this refund</li>
+            </ul>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              ${refundMethod === 'wallet' ? 
+                '<a href="' + process.env.NEXT_PUBLIC_APP_URL + '/dashboard/wallet" class="btn" style="background: #28a745;">Check Wallet Balance</a>' :
+                '<a href="' + process.env.NEXT_PUBLIC_APP_URL + '/dashboard/orders" class="btn" style="background: #28a745;">View Order History</a>'
+              }
+              <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/services" class="btn" style="background: #007bff;">Browse Services</a>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <p>We apologize for any inconvenience. Thank you for your understanding!</p>
+            <p>Need help? Contact us at ${process.env.RESEND_ADMIN_EMAIL || 'baoolakingglobalenterprises@gmail.com'}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  };
+}
+
+/**
+ * Get estimated refund time based on payment method
+ */
+export function getEstimatedRefundTime(paymentMethod: 'wallet' | 'bank_transfer'): string {
+  if (paymentMethod === 'wallet') {
+    return 'Refund has been credited to your wallet immediately and is available for use now.';
+  } else {
+    return 'Refund will be processed to your bank account within 3-5 business days.';
+  }
+}
+
+/**
+ * Create FailedOrderEmailData from OrderEmailData with refund information
+ */
+export function createFailedOrderEmailData(
+  orderData: OrderEmailData,
+  refundAmount?: number
+): FailedOrderEmailData {
+  const actualRefundAmount = refundAmount ?? orderData.orderDetails.totalPrice;
+  const refundMethod = orderData.orderDetails.paymentMethod as 'wallet' | 'bank_transfer';
+  
+  return {
+    ...orderData,
+    refundAmount: actualRefundAmount,
+    refundMethod,
+    estimatedRefundTime: getEstimatedRefundTime(refundMethod)
+  };
 }
