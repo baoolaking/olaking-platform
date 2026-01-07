@@ -29,6 +29,8 @@ export interface Order {
   bank_account_id: string | null;
   payment_verified_at: string | null;
   admin_notes: string | null;
+  assigned_to: string | null;
+  assigned_at: string | null;
   completed_at: string | null;
   cancelled_at: string | null;
   created_at: string;

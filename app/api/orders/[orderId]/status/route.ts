@@ -33,7 +33,7 @@ export async function GET(
     // Get order status - verify it belongs to the user
     const { data: order, error: orderError } = await supabase
       .from("orders")
-      .select("id, status, updated_at")
+      .select("id, status, assigned_to, updated_at")
       .eq("id", orderId)
       .eq("user_id", user.id)
       .single();
@@ -48,6 +48,7 @@ export async function GET(
     return NextResponse.json({
       orderId: order.id,
       status: order.status,
+      assignedTo: order.assigned_to,
       updatedAt: order.updated_at
     });
   } catch (error) {

@@ -95,10 +95,25 @@ const statusConfig: Record<OrderStatus, {
   },
 };
 
+// Helper function to get display status based on order state
+const getDisplayStatus = (order: Order): { color: string; icon: React.ReactNode; label: string; description: string } => {
+  // If order is pending and assigned to an admin, show as "Approved"
+  if (order.status === "pending" && order.assigned_to) {
+    return {
+      color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400",
+      icon: <CheckCircle2 className="h-4 w-4" />,
+      label: "Approved",
+      description: "Your order has been approved and is being worked on"
+    };
+  }
+
+  return statusConfig[order.status];
+};
+
 export function OrderCard({ order, onRefresh }: OrderCardProps) {
   const [copiedItems, setCopiedItems] = useState<{ [key: string]: boolean }>({});
 
-  const statusInfo = statusConfig[order.status];
+  const statusInfo = getDisplayStatus(order);
   const isWalletOrder = order.link === "wallet_funding" && !order.service_id;
 
   const copyToClipboard = async (text: string, key: string) => {
