@@ -62,8 +62,8 @@ const statusConfig: Record<OrderStatus, {
   },
   pending: {
     color: "bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400",
-    icon: <Loader2 className="h-3 w-3 animate-spin" />,
-    label: "Processing",
+    icon: <Clock className="h-3 w-3" />,
+    label: "Pending",
   },
   completed: {
     color: "bg-green-500/10 text-green-700 border-green-500/20 dark:text-green-400",
@@ -87,18 +87,25 @@ const statusConfig: Record<OrderStatus, {
   },
 };
 
-// Helper function to get display status based on order state
-const getDisplayStatus = (order: Order): { color: string; icon: React.ReactNode; label: string } => {
-  // If order is pending and assigned to an admin, show as "Approved"
-  if (order.status === "pending" && order.assigned_to) {
-    return {
-      color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400",
-      icon: <CheckCircle2 className="h-3 w-3" />,
-      label: "Approved",
-    };
+// Helper function to get approval status badge
+const getApprovalStatus = (order: Order): { color: string; icon: React.ReactNode; label: string } | null => {
+  // Only show approval status for pending orders
+  if (order.status === "pending") {
+    if (order.assigned_to) {
+      return {
+        color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400",
+        icon: <CheckCircle2 className="h-3 w-3" />,
+        label: "Approved",
+      };
+    } else {
+      return {
+        color: "bg-gray-500/10 text-gray-700 border-gray-500/20 dark:text-gray-400",
+        icon: <Clock className="h-3 w-3" />,
+        label: "Unapproved",
+      };
+    }
   }
-
-  return statusConfig[order.status];
+  return null;
 };
 
 export function OrdersTable({ orders }: OrdersTableProps) {
@@ -163,7 +170,8 @@ export function OrdersTable({ orders }: OrdersTableProps) {
             </TableHeader>
             <TableBody>
               {orders.map((order) => {
-                const statusInfo = getDisplayStatus(order);
+                const statusInfo = statusConfig[order.status];
+                const approvalInfo = getApprovalStatus(order);
                 const isWallet = isWalletOrder(order);
                 const isExpanded = expandedRows.has(order.id);
 
@@ -206,13 +214,24 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                       </TableCell>
 
                       <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={`${statusInfo.color} flex items-center gap-1 text-xs w-fit`}
-                        >
-                          {statusInfo.icon}
-                          <span className="hidden sm:inline">{statusInfo.label}</span>
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge
+                            variant="outline"
+                            className={`${statusInfo.color} flex items-center gap-1 text-xs w-fit`}
+                          >
+                            {statusInfo.icon}
+                            <span className="hidden sm:inline">{statusInfo.label}</span>
+                          </Badge>
+                          {approvalInfo && (
+                            <Badge
+                              variant="outline"
+                              className={`${approvalInfo.color} flex items-center gap-1 text-xs w-fit`}
+                            >
+                              {approvalInfo.icon}
+                              <span className="hidden sm:inline">{approvalInfo.label}</span>
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
 
                       <TableCell>

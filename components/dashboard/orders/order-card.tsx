@@ -65,9 +65,9 @@ const statusConfig: Record<OrderStatus, {
   },
   pending: {
     color: "bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-400",
-    icon: <Loader2 className="h-4 w-4 animate-spin" />,
-    label: "Processing",
-    description: "Your order is being processed"
+    icon: <Clock className="h-4 w-4" />,
+    label: "Pending",
+    description: "Your order is pending"
   },
   completed: {
     color: "bg-green-500/10 text-green-700 border-green-500/20 dark:text-green-400",
@@ -95,25 +95,34 @@ const statusConfig: Record<OrderStatus, {
   },
 };
 
-// Helper function to get display status based on order state
-const getDisplayStatus = (order: Order): { color: string; icon: React.ReactNode; label: string; description: string } => {
-  // If order is pending and assigned to an admin, show as "Approved"
-  if (order.status === "pending" && order.assigned_to) {
-    return {
-      color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400",
-      icon: <CheckCircle2 className="h-4 w-4" />,
-      label: "Approved",
-      description: "Your order has been approved and is being worked on"
-    };
+// Helper function to get approval status badge
+const getApprovalStatus = (order: Order): { color: string; icon: React.ReactNode; label: string; description: string } | null => {
+  // Only show approval status for pending orders
+  if (order.status === "pending") {
+    if (order.assigned_to) {
+      return {
+        color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:text-emerald-400",
+        icon: <CheckCircle2 className="h-4 w-4" />,
+        label: "Approved",
+        description: "An admin has been assigned to work on your order"
+      };
+    } else {
+      return {
+        color: "bg-gray-500/10 text-gray-700 border-gray-500/20 dark:text-gray-400",
+        icon: <Clock className="h-4 w-4" />,
+        label: "Unapproved",
+        description: "Waiting for admin assignment"
+      };
+    }
   }
-
-  return statusConfig[order.status];
+  return null;
 };
 
 export function OrderCard({ order, onRefresh }: OrderCardProps) {
   const [copiedItems, setCopiedItems] = useState<{ [key: string]: boolean }>({});
 
-  const statusInfo = getDisplayStatus(order);
+  const statusInfo = statusConfig[order.status];
+  const approvalInfo = getApprovalStatus(order);
   const isWalletOrder = order.link === "wallet_funding" && !order.service_id;
 
   const copyToClipboard = async (text: string, key: string) => {
@@ -180,13 +189,24 @@ export function OrderCard({ order, onRefresh }: OrderCardProps) {
               </span>
             </CardDescription>
           </div>
-          <Badge
-            variant="outline"
-            className={`${statusInfo.color} flex items-center gap-1 flex-shrink-0 text-xs`}
-          >
-            {statusInfo.icon}
-            <span>{statusInfo.label}</span>
-          </Badge>
+          <div className="flex flex-col gap-1.5 items-end">
+            <Badge
+              variant="outline"
+              className={`${statusInfo.color} flex items-center gap-1 flex-shrink-0 text-xs`}
+            >
+              {statusInfo.icon}
+              <span>{statusInfo.label}</span>
+            </Badge>
+            {approvalInfo && (
+              <Badge
+                variant="outline"
+                className={`${approvalInfo.color} flex items-center gap-1 flex-shrink-0 text-xs`}
+              >
+                {approvalInfo.icon}
+                <span>{approvalInfo.label}</span>
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -227,10 +247,15 @@ export function OrderCard({ order, onRefresh }: OrderCardProps) {
         </div>
 
         {/* Status Description */}
-        <div className="bg-muted/50 p-3 rounded-lg">
+        <div className="bg-muted/50 p-3 rounded-lg space-y-2">
           <p className="text-sm text-muted-foreground">
             {statusInfo.description}
           </p>
+          {approvalInfo && (
+            <p className="text-sm text-muted-foreground border-t pt-2">
+              <span className="font-medium">Approval Status:</span> {approvalInfo.description}
+            </p>
+          )}
         </div>
 
         {/* Payment Instructions for Bank Transfer */}
