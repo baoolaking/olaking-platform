@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 
 export function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="border-t mt-16">
       <div className="container mx-auto px-4 py-8">
@@ -36,7 +38,7 @@ export function Footer() {
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground space-y-2">
           <p>
-            &copy; 2025 BAO OLAKING GLOBAL ENTERPRISES. All rights reserved.
+            &copy; {currentYear} BAO OLAKING GLOBAL ENTERPRISES. All rights reserved.
           </p>
           <p>
             REGISTRATION NO. 8298166
