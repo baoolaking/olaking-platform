@@ -2,6 +2,21 @@
 
 This document explains how to configure and customize the TikTok coins promotion feature in your application.
 
+## TikTok Coin Packages
+
+The application now displays official TikTok coin packages with pricing:
+
+| Coins | Price | Notes |
+|-------|-------|-------|
+| 200 | ₦4,000 | **Featured in header** |
+| 500 | ₦10,000 | Entry package |
+| 1,000 | ₦20,000 | Popular choice |
+| 1,500 | ₦30,000 | **Most Recent** |
+| 5,000 | ₦100,000 | Value package |
+| 10,000 | ₦200,000 | Premium package |
+
+**Key Message:** "Save around 25% with a lower third-party service fee"
+
 ## Configuration
 
 ### Environment Variable Setup

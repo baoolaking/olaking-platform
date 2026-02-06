@@ -32,7 +32,7 @@ INSERT INTO services (
   is_active
 ) VALUES
   -- TikTok Services
-  ('tiktok', 'coin', 'TikTok coins for gifting and support', 5000, 3500, 5000, 100, 50000, '1-6 hours', true),
+  ('tiktok', 'coin', 'TikTok coins - Packages: 200 (₦4k), 500 (₦10k), 1000 (₦20k), 1500 (₦30k), 5000 (₦100k), 10000 (₦200k). Save 25% with lower service fee. Contact via WhatsApp.', 5000, 3500, 5000, 100, 50000, 'Instant', true),
   ('tiktok', 'followers', 'High-quality TikTok followers delivered gradually', 2500, 1750, 2500, 100, 100000, '1-24 hours', true),
   ('tiktok', 'views', 'TikTok video views to boost engagement', 500, 350, 500, 1000, 1000000, '1-12 hours', true),
   ('tiktok', 'video comments', 'Custom TikTok video comments from real users', 5000, 3500, 5000, 10, 1000, '1-48 hours', true),

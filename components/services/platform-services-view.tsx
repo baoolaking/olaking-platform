@@ -42,7 +42,7 @@ export function PlatformServicesView({
     min_quantity: 1,
     max_quantity: 1,
     delivery_time: "Instant",
-    description: "Purchase TikTok coins directly through WhatsApp support"
+    description: "Packages: 200 (₦4k), 500 (₦10k), 1000 (₦20k), 1500 (₦30k), 5000 (₦100k), 10000 (₦200k). Save 25% with lower service fee."
   };
 
   // Filter services for this platform

@@ -1,7 +1,10 @@
 /**
  * Phone number utilities for intelligent detection and transformation
- * Handles common Nigerian phone number formats and converts them to E.164 format
+ * Handles international phone number formats and converts them to E.164 format
+ * Supports WhatsApp-compatible phone numbers from all countries
  */
+
+import { parsePhoneNumber, isValidPhoneNumber, CountryCode } from 'libphonenumber-js';
 
 export interface PhoneTransformResult {
   formatted: string;
@@ -11,12 +14,13 @@ export interface PhoneTransformResult {
 }
 
 /**
- * Transforms various Nigerian phone number formats to E.164 international format
- * Supports formats like:
- * - 09087654322 (11 digits starting with 0)
- * - 7098765412 (10 digits starting with 7,8,9)
- * - 23456789098 (11 digits starting with 234)
- * - +2347098765412 (already in international format)
+ * Transforms various phone number formats to E.164 international format
+ * Supports formats from all countries, with special handling for Nigerian numbers:
+ * - 09087654322 (11 digits starting with 0) - Nigerian format
+ * - 7098765412 (10 digits starting with 7,8,9) - Nigerian format
+ * - +2347098765412 (international format with country code)
+ * - +1234567890 (any international format)
+ * - +44 20 7946 0958 (international with spaces)
  */
 export function transformPhoneNumber(input: string): PhoneTransformResult {
   // Remove all non-digit characters except +
@@ -32,46 +36,84 @@ export function transformPhoneNumber(input: string): PhoneTransformResult {
     };
   }
 
-  // Already in international format with +
-  if (cleaned.startsWith('+234') && cleaned.length === 14) {
-    return {
-      formatted: cleaned,
-      isValid: true,
-      originalFormat: 'international_with_plus',
-      detectedCountry: 'nigeria'
-    };
+  // Try to parse as international number first
+  if (cleaned.startsWith('+')) {
+    try {
+      const phoneNumber = parsePhoneNumber(cleaned);
+      if (phoneNumber && isValidPhoneNumber(cleaned)) {
+        return {
+          formatted: phoneNumber.number,
+          isValid: true,
+          originalFormat: 'international_with_plus',
+          detectedCountry: phoneNumber.country?.toLowerCase() || 'unknown'
+        };
+      }
+    } catch (error) {
+      // Continue to other checks if parsing fails
+    }
   }
 
-  // International format without +
-  if (cleaned.startsWith('234') && cleaned.length === 13) {
-    return {
-      formatted: `+${cleaned}`,
-      isValid: true,
-      originalFormat: 'international_without_plus',
-      detectedCountry: 'nigeria'
-    };
+  // Try parsing with country code but without +
+  if (cleaned.length > 10 && !cleaned.startsWith('0')) {
+    try {
+      const withPlus = `+${cleaned}`;
+      const phoneNumber = parsePhoneNumber(withPlus);
+      if (phoneNumber && isValidPhoneNumber(withPlus)) {
+        return {
+          formatted: phoneNumber.number,
+          isValid: true,
+          originalFormat: 'international_without_plus',
+          detectedCountry: phoneNumber.country?.toLowerCase() || 'unknown'
+        };
+      }
+    } catch (error) {
+      // Continue to Nigerian-specific checks
+    }
   }
 
   // Nigerian format starting with 0 (11 digits)
   if (cleaned.startsWith('0') && cleaned.length === 11) {
-    // Remove leading 0 and add +234
     const withoutZero = cleaned.substring(1);
-    return {
-      formatted: `+234${withoutZero}`,
-      isValid: isValidNigerianNumber(withoutZero),
-      originalFormat: 'nigerian_with_zero',
-      detectedCountry: 'nigeria'
-    };
+    const formatted = `+234${withoutZero}`;
+    try {
+      const phoneNumber = parsePhoneNumber(formatted);
+      const isValid = phoneNumber && isValidPhoneNumber(formatted) && isValidNigerianNumber(withoutZero);
+      return {
+        formatted,
+        isValid,
+        originalFormat: 'nigerian_with_zero',
+        detectedCountry: 'nigeria'
+      };
+    } catch (error) {
+      return {
+        formatted,
+        isValid: isValidNigerianNumber(withoutZero),
+        originalFormat: 'nigerian_with_zero',
+        detectedCountry: 'nigeria'
+      };
+    }
   }
 
   // Nigerian format without leading 0 (10 digits)
   if (cleaned.length === 10 && /^[789]/.test(cleaned)) {
-    return {
-      formatted: `+234${cleaned}`,
-      isValid: isValidNigerianNumber(cleaned),
-      originalFormat: 'nigerian_without_zero',
-      detectedCountry: 'nigeria'
-    };
+    const formatted = `+234${cleaned}`;
+    try {
+      const phoneNumber = parsePhoneNumber(formatted);
+      const isValid = phoneNumber && isValidPhoneNumber(formatted) && isValidNigerianNumber(cleaned);
+      return {
+        formatted,
+        isValid,
+        originalFormat: 'nigerian_without_zero',
+        detectedCountry: 'nigeria'
+      };
+    } catch (error) {
+      return {
+        formatted,
+        isValid: isValidNigerianNumber(cleaned),
+        originalFormat: 'nigerian_without_zero',
+        detectedCountry: 'nigeria'
+      };
+    }
   }
 
   // If it doesn't match any known pattern, return as invalid
@@ -107,10 +149,21 @@ function isValidNigerianNumber(number: string): boolean {
  * Formats phone number for display (adds spaces for readability)
  */
 export function formatPhoneForDisplay(phoneNumber: string): string {
+  try {
+    const parsed = parsePhoneNumber(phoneNumber);
+    if (parsed) {
+      return parsed.formatInternational();
+    }
+  } catch (error) {
+    // Fallback to basic formatting
+  }
+  
+  // Fallback for Nigerian numbers
   if (phoneNumber.startsWith('+234') && phoneNumber.length === 14) {
     // +234 XXX XXX XXXX
     return `${phoneNumber.substring(0, 4)} ${phoneNumber.substring(4, 7)} ${phoneNumber.substring(7, 10)} ${phoneNumber.substring(10)}`;
   }
+  
   return phoneNumber;
 }
 
@@ -120,9 +173,9 @@ export function formatPhoneForDisplay(phoneNumber: string): string {
 export function getFormatDescription(originalFormat: string): string {
   switch (originalFormat) {
     case 'international_with_plus':
-      return 'International format (+234...)';
+      return 'International format (with +)';
     case 'international_without_plus':
-      return 'International format (234...)';
+      return 'International format (without +)';
     case 'nigerian_with_zero':
       return 'Nigerian format (0...)';
     case 'nigerian_without_zero':
@@ -133,5 +186,17 @@ export function getFormatDescription(originalFormat: string): string {
       return 'Unknown format';
     default:
       return 'Detected format';
+  }
+}
+
+/**
+ * Gets the country name from a phone number
+ */
+export function getCountryFromPhone(phoneNumber: string): string | null {
+  try {
+    const parsed = parsePhoneNumber(phoneNumber);
+    return parsed?.country || null;
+  } catch (error) {
+    return null;
   }
 }

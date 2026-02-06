@@ -25,6 +25,7 @@ import { Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { createUser, updateUser } from "@/app/admin/users/actions";
 import { Tables } from "@/types/database";
 import { PasswordInput } from "@/components/ui/password-input";
+import { SmartPhoneInput } from "@/components/ui/smart-phone-input";
 import { toast } from "sonner";
 
 type User = Tables<"users">;
@@ -43,6 +44,7 @@ export function UserForm({ user, onSuccess, currentUserRole }: UserFormProps) {
   );
   const [showPassword, setShowPassword] = useState(false);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
+  const [whatsappNo, setWhatsappNo] = useState(user?.whatsapp_no || "");
   const isEdit = !!user;
   const isSuperAdmin = currentUserRole === "super_admin";
   const isSubAdmin = currentUserRole === "sub_admin";
@@ -51,6 +53,7 @@ export function UserForm({ user, onSuccess, currentUserRole }: UserFormProps) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     formData.set("role", selectedRole);
+    formData.set("whatsapp_no", whatsappNo);
 
     startTransition(async () => {
       try {
@@ -130,13 +133,11 @@ export function UserForm({ user, onSuccess, currentUserRole }: UserFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="whatsapp_no">WhatsApp Number</Label>
-            <Input
-              id="whatsapp_no"
-              name="whatsapp_no"
-              placeholder="+234..."
-              required
-              defaultValue={user?.whatsapp_no || ""}
+            <SmartPhoneInput
+              value={whatsappNo}
+              onChange={setWhatsappNo}
+              label="WhatsApp Number"
+              placeholder="+1234567890, +447123456789, or 09087654322"
             />
           </div>
           {!isEdit && (

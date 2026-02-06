@@ -1,23 +1,33 @@
-# Olaking - TikTok Boosting Platform
+# Olaking - Social Media Boosting Platform
 
-A comprehensive social media boosting platform built with Next.js 15, Supabase, and TypeScript.
+A comprehensive social media boosting platform built with Next.js 16, Supabase, and TypeScript. Manage TikTok services, wallet transactions, and orders with a powerful admin panel.
 
 ## 🚀 Features
 
+### User Features
 - **Social Media Boosting Services** - TikTok followers, likes, views, and more
-- **External Services** - UK Accounts, PayPal, TikTok Coins, Phone Numbers (WhatsApp redirect)
-- **User Authentication** - Register with email, username, WhatsApp, and password
+- **TikTok Coins** - Purchase TikTok coins with dynamic pricing via WhatsApp
+- **External Services** - UK Accounts, PayPal, Phone Numbers (WhatsApp redirect)
 - **Triple Login System** - Login with username, WhatsApp number, or email
+- **International Phone Support** - Accept phone numbers from any country (E.164 format)
 - **Wallet System** - Fund wallet, automatic deductions, transaction history
 - **Order Management** - Create orders, track status, view history
-- **Admin Panel** - Verify payments, manage services, view audit logs
-- **Role-Based Access** - User, Sub Admin, Super Admin roles
-- **Email Notifications** - Order updates via Resend
 - **Dark Mode** - Built-in light/dark theme toggle
+
+### Admin Features
+- **Admin Dashboard** - Overview with stats (users, orders, revenue, wallet balances)
+- **User Management** - View, create, edit, and deactivate users
+- **Order Management** - Verify payments, update status, assign orders
+- **Service Management** - Create and manage social media services
+- **TikTok Packages** - Dynamic pricing management for TikTok coin packages
+- **Bank Accounts** - Manage payment bank accounts
+- **Wallet Operations** - Credit/debit user wallets
+- **Audit Logs** - Track all admin actions
+- **Role-Based Access** - User, Sub Admin, Super Admin roles
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js 16.1.1 (App Router)
+- **Framework:** Next.js 16.1.1 (App Router with Turbopack)
 - **Language:** TypeScript 5.9.3
 - **Styling:** Tailwind CSS 4.1.18
 - **Database:** Supabase (PostgreSQL)
@@ -26,14 +36,16 @@ A comprehensive social media boosting platform built with Next.js 15, Supabase, 
 - **UI Components:** Shadcn/ui
 - **Animations:** Framer Motion 12.23.26
 - **Forms:** React Hook Form + Zod validation
+- **Phone Validation:** libphonenumber-js
 - **Icons:** Lucide React
+- **Notifications:** Sonner
 
 ## 📋 Prerequisites
 
 - Node.js 18+ (recommended: v20 or later)
 - pnpm (recommended) or npm
 - Supabase account
-- Resend account (optional, for email notifications)
+- Resend account (for email notifications)
 
 ## 🚦 Getting Started
 
@@ -48,8 +60,6 @@ cd Olaking
 
 ```bash
 pnpm install
-# or
-npm install
 ```
 
 ### 3. Set Up Environment Variables
@@ -66,8 +76,9 @@ Update `.env.local` with your actual values:
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Resend Email Configuration (Optional)
+# Resend Email Configuration
 RESEND_API_KEY=your_resend_api_key
 
 # Application Configuration
@@ -78,145 +89,139 @@ NEXT_PUBLIC_WHATSAPP_TIKTOK_COINS=+234XXXXXXXXXX
 NEXT_PUBLIC_WHATSAPP_NUMBERS=+234XXXXXXXXXX
 ```
 
-See [ENV_VARIABLES.md](docs/ENV_VARIABLES.md) for detailed configuration.
-
 ### 4. Set Up Supabase Database
 
-Follow the complete guide in [SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md):
-
 1. Create a new Supabase project
-2. Run the SQL migrations (tables, enums, RLS policies, functions)
-3. Set up database triggers
-4. Configure authentication settings
-5. Set up Edge Functions
-6. Generate TypeScript types
+2. Run the SQL migrations in order:
+   - `database/migrations/*.sql` - Core tables and enums
+   - `database/migrations/create_tiktok_coin_packages.sql` - TikTok packages table
+3. Run seed data:
+   - `database/seeds/01_seed_bank_accounts.sql`
+   - `database/seeds/02_seed_platform_data.sql`
+4. Configure RLS policies (included in migrations)
 
-### 5. Run the Development Server
+### 5. Create Admin User
+
+Navigate to `/seed-admin` and create your first super admin account.
+
+### 6. Run the Development Server
 
 ```bash
 pnpm dev
-# or
-npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## 📚 Documentation
-
-- [Environment Variables Setup](docs/ENV_VARIABLES.md)
-- [Supabase Database Setup](docs/SUPABASE_SETUP.md)
-- [Authentication Setup](docs/AUTHENTICATION_SETUP.md)
 
 ## 🏗️ Project Structure
 
 ```
 Olaking/
 ├── app/
-│   ├── (dashboard)/          # Protected dashboard routes
-│   │   ├── dashboard/        # User dashboard
-│   │   └── layout.tsx        # Dashboard layout with auth check
+│   ├── (dashboard)/          # Protected user dashboard routes
+│   ├── admin/                # Admin panel routes
+│   │   ├── orders/           # Order management
+│   │   ├── users/            # User management
+│   │   ├── services/         # Service management
+│   │   ├── tiktok-packages/  # TikTok coin packages
+│   │   ├── bank-accounts/    # Bank account management
+│   │   └── settings/         # Admin settings
+│   ├── api/                  # API routes
+│   ├── auth/                 # Authentication routes
 │   ├── login/                # Login page
 │   ├── register/             # Registration page
-│   ├── services/             # Services browsing
-│   ├── layout.tsx            # Root layout
-│   ├── page.tsx              # Landing page
-│   └── globals.css           # Global styles & Tailwind config
+│   └── page.tsx              # Landing page
 ├── components/
-│   ├── ui/                   # Shadcn/ui components
-│   ├── theme-provider.tsx    # Theme context provider
-│   └── theme-toggle.tsx      # Dark mode toggle
+│   ├── admin/                # Admin-specific components
+│   ├── common/               # Shared components
+│   ├── dashboard/            # User dashboard components
+│   ├── sections/             # Landing page sections
+│   └── ui/                   # Shadcn/ui components
 ├── lib/
-│   ├── supabase/
-│   │   ├── client.ts         # Client-side Supabase client
-│   │   ├── server.ts         # Server-side Supabase client
-│   │   └── middleware.ts     # Auth middleware helper
-│   └── validations/
-│       └── auth.ts           # Zod validation schemas
-├── docs/
-│   ├── ENV_VARIABLES.md      # Environment variables guide
-│   ├── SUPABASE_SETUP.md     # Database setup guide
-│   └── AUTHENTICATION_SETUP.md # Auth implementation guide
-├── middleware.ts             # Route protection middleware
-├── .env.local.example        # Environment variables template
-└── package.json              # Project dependencies
+│   ├── supabase/             # Supabase clients
+│   ├── config/               # Configuration files
+│   ├── utils/                # Utility functions
+│   └── validations/          # Zod schemas
+├── hooks/                    # Custom React hooks
+├── types/                    # TypeScript type definitions
+├── database/
+│   ├── migrations/           # SQL migrations
+│   └── seeds/                # Seed data
+└── middleware.ts             # Route protection
 ```
 
-## 🎨 Key Features Explained
+## 🎨 Key Features
 
-### Authentication
+### International Phone Support
 
-The platform supports a unique triple authentication system:
+- Accepts phone numbers from any country
+- Validates using libphonenumber-js
+- Stores in E.164 format for WhatsApp compatibility
+- Smart input with country code detection
 
-- **Register:** Email, Username, Full Name, WhatsApp Number, Password
-- **Login:** Use any of: Username, WhatsApp Number, or Email + Password
-- **Protected Routes:** Middleware automatically protects authenticated routes
-- **Role-Based Access:** Different permissions for users, sub-admins, and super-admins
+### TikTok Coin Packages
 
-See [AUTHENTICATION_SETUP.md](docs/AUTHENTICATION_SETUP.md) for detailed implementation.
+- Admin-managed dynamic pricing
+- 6 default packages (200, 500, 1000, 1500, 5000, 10000 coins)
+- Popular package highlighting
+- Mobile-optimized selection modal
+- WhatsApp integration with package details
 
-### Landing Page
+### Wallet System
 
-The animated landing page features:
+- Real-time balance tracking
+- Credit/debit operations
+- Transaction history
+- Admin wallet management
+- Automatic order deductions
 
-- **5 Objectives Section:**
-  - Social Media Boosting (internal service)
-  - UK Accounts, PayPal, TikTok Coins, Phone Numbers (WhatsApp redirect)
-- **Platform Showcase:** TikTok, Instagram, Facebook, Twitter, YouTube, Telegram
-- **Feature Highlights:** Fast delivery, secure payments, 24/7 support, real results
-- **Stats Counter:** Orders processed, active clients, success rate
-- **Framer Motion Animations:** Smooth page transitions and floating elements
+### Order Management
 
-### User Dashboard
+- Multi-status workflow (awaiting_payment, pending, completed, etc.)
+- Payment verification by admins
+- Order assignment system
+- WhatsApp notifications
+- Status-based filtering
 
-Once authenticated, users see:
+### Admin Dashboard
 
-- **Wallet Balance:** Current balance with fund wallet link
-- **Order Statistics:** Total orders and pending orders count
-- **Quick Actions:** Browse services, view orders
-- **Account Information:** Email, username, WhatsApp, role
-
-### Database Schema
-
-The platform uses Supabase PostgreSQL with:
-
-- **8 Core Tables:** users, services, orders, bank_accounts, admin_settings, wallet_transactions, admin_audit_logs
-- **Type-Safe Enums:** user_role, order_status, transaction_type, quality_type, payment_method, platform_enum
-- **Row Level Security (RLS):** Policies for all tables with role-based access
-- **Database Functions:** Wallet operations, audit logging, auto-cancellation
-- **Triggers:** Automatic timestamp updates, user creation from auth
-
-See [SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md) for complete schema.
+- Total users, orders, revenue stats
+- Total wallet balance across all users
+- Recent orders with clickable navigation
+- Pending actions overview
+- Color-coded status badges
 
 ## 🔐 Security Features
 
 - **Password Requirements:** Minimum 8 characters, mixed case, numbers
-- **Unique Identifiers:** Username and WhatsApp number uniqueness enforced
-- **Session Management:** Secure HTTP-only cookies via Supabase
-- **CSRF Protection:** Built into Next.js Server Actions
-- **Input Validation:** All forms validated with Zod schemas
+- **Unique Identifiers:** Username and WhatsApp number uniqueness
+- **Session Management:** Secure HTTP-only cookies
+- **Input Validation:** Zod schemas for all forms
 - **Row Level Security:** Database-level access control
 - **Admin Audit Logs:** Track all admin actions
+- **Role-Based Permissions:** Granular access control
 
-## 🚧 Coming Soon
+## 🚀 Deployment
 
-- [ ] Wallet funding flow with bank account selection
-- [ ] Services browsing and order creation
-- [ ] Payment verification for admins
-- [ ] Order status updates
-- [ ] Email notifications via Resend
-- [ ] Admin panel for service management
-- [ ] User profile edit page
-- [ ] Password reset flow
-- [ ] Transaction history page
-- [ ] Order history with filters
+### Build for Production
 
-## 🤝 Contributing
+```bash
+pnpm build
+```
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Start Production Server
+
+```bash
+pnpm start
+```
+
+### Environment Variables for Production
+
+Ensure all environment variables are set in your production environment, especially:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY`
+- `NEXT_PUBLIC_APP_URL` (your production URL)
 
 ## 📝 License
 
@@ -224,7 +229,7 @@ This project is proprietary and confidential. All rights reserved by BAO OLAKING
 
 ## 📧 Support
 
-For support, contact the development team or refer to the documentation in the `docs/` folder.
+For support, contact the development team.
 
 ---
 

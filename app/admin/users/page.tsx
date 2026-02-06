@@ -85,6 +85,16 @@ export default async function AdminUsersPage({
     console.error("Error fetching users:", usersError);
   }
 
+  // Get total stats (without pagination) for the stats cards
+  const { data: allUsersStats } = await adminClient
+    .from("users")
+    .select("role", { count: "exact" });
+
+  const totalUsersCount = allUsersStats?.length || 0;
+  const regularUsersCount = allUsersStats?.filter((u) => u.role === "user").length || 0;
+  const subAdminsCount = allUsersStats?.filter((u) => u.role === "sub_admin").length || 0;
+  const superAdminsCount = allUsersStats?.filter((u) => u.role === "super_admin").length || 0;
+
   // Get order counts for each user using admin client
   const userIds = users?.map((u) => u.id) || [];
   const { data: orderCounts } = await adminClient
@@ -157,7 +167,7 @@ export default async function AdminUsersPage({
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users?.length || 0}</div>
+            <div className="text-2xl font-bold">{totalUsersCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -165,9 +175,7 @@ export default async function AdminUsersPage({
             <CardTitle className="text-sm font-medium">Regular Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users?.filter((u) => u.role === "user").length || 0}
-            </div>
+            <div className="text-2xl font-bold">{regularUsersCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -175,9 +183,7 @@ export default async function AdminUsersPage({
             <CardTitle className="text-sm font-medium">Sub Admins</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users?.filter((u) => u.role === "sub_admin").length || 0}
-            </div>
+            <div className="text-2xl font-bold">{subAdminsCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -185,9 +191,7 @@ export default async function AdminUsersPage({
             <CardTitle className="text-sm font-medium">Super Admins</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users?.filter((u) => u.role === "super_admin").length || 0}
-            </div>
+            <div className="text-2xl font-bold">{superAdminsCount}</div>
           </CardContent>
         </Card>
       </div>

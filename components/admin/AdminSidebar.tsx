@@ -11,6 +11,7 @@ import {
   Settings,
   CreditCard,
   Shield,
+  Coins,
 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,12 @@ const navigation = [
     href: "/admin/services",
     icon: Shield,
     roles: ["super_admin"], // Only super admin
+  },
+  {
+    name: "TikTok Packages",
+    href: "/admin/tiktok-packages",
+    icon: Coins,
+    roles: ["super_admin", "sub_admin"], // Both roles can access
   },
   {
     name: "Bank Accounts",

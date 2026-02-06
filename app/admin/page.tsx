@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   Card,
   CardContent,
@@ -7,10 +9,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, ShoppingBag, DollarSign, TrendingUp, Wallet } from "lucide-react";
+
+const statusColors: Record<string, string> = {
+  pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  processing: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  completed: "bg-green-500/10 text-green-500 border-green-500/20",
+  cancelled: "bg-red-500/10 text-red-500 border-red-500/20",
+  awaiting_payment: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  awaiting_confirmation: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  failed: "bg-red-500/10 text-red-500 border-red-500/20",
+  awaiting_refund: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  refunded: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+};
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
+  const adminClient = createAdminClient();
 
   const {
     data: { user },
@@ -52,13 +68,29 @@ export default async function AdminDashboardPage() {
       0
     ) || 0;
 
-  // Fetch recent orders
-  const { data: recentOrders } = await supabase
+  // Fetch total wallet balance across all users
+  const { data: walletData } = await supabase
+    .from("users")
+    .select("wallet_balance");
+
+  const totalWalletBalance =
+    walletData?.reduce(
+      (sum, user) => sum + (user.wallet_balance || 0),
+      0
+    ) || 0;
+
+  // Fetch recent orders using admin client to bypass RLS
+  const { data: recentOrders, error: recentOrdersError } = await adminClient
     .from("orders")
     .select(
       `
-      *,
-      users (
+      id,
+      status,
+      total_price,
+      created_at,
+      user_id,
+      service_id,
+      users!orders_user_id_fkey (
         username,
         full_name
       ),
@@ -71,6 +103,10 @@ export default async function AdminDashboardPage() {
     .order("created_at", { ascending: false })
     .limit(5);
 
+  if (recentOrdersError) {
+    console.error("Error fetching recent orders:", recentOrdersError);
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -82,7 +118,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-2 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:gap-6 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -128,6 +164,19 @@ export default async function AdminDashboardPage() {
               ₦{totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Completed orders</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Wallets</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ₦{totalWalletBalance.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">All user balances</p>
           </CardContent>
         </Card>
       </div>
@@ -181,15 +230,16 @@ export default async function AdminDashboardPage() {
               {recentOrders.map(
                 (order: {
                   id: string;
-                  users: { full_name: string; username: string };
-                  services: { platform: string; service_type: string };
+                  users: { full_name: string; username: string } | null;
+                  services: { platform: string; service_type: string } | null;
                   status: string;
-                  total_amount: number;
-                  created_at: string;
+                  total_price: number;
+                  created_at: string | null;
                 }) => (
-                  <div
+                  <Link
                     key={order.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg"
+                    href="/admin/orders"
+                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                   >
                     <div className="space-y-1">
                       <p className="font-medium">
@@ -198,18 +248,21 @@ export default async function AdminDashboardPage() {
                       </p>
                       <p className="text-sm text-muted-foreground">
                         by @{order.users?.username} •{" "}
-                        {new Date(order.created_at).toLocaleDateString()}
+                        {order.created_at ? new Date(order.created_at).toLocaleDateString() : "N/A"}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right space-y-1">
                       <p className="font-bold">
-                        ₦{order.total_amount.toLocaleString()}
+                        ₦{order.total_price.toLocaleString()}
                       </p>
-                      <p className="text-xs text-muted-foreground capitalize">
+                      <Badge
+                        variant="outline"
+                        className={statusColors[order.status] || ""}
+                      >
                         {order.status.replace("_", " ")}
-                      </p>
+                      </Badge>
                     </div>
-                  </div>
+                  </Link>
                 )
               )}
             </div>

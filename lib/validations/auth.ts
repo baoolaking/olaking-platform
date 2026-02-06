@@ -23,7 +23,7 @@ export const registerSchema = z
         const result = transformPhoneNumber(val);
         return result.isValid;
       }, {
-        message: "Invalid phone number. Supported formats: 09087654322, 7098765412, +2347098765412"
+        message: "Invalid phone number. Use international format (e.g., +1234567890, +447123456789) or Nigerian format (09087654322, 7098765412)"
       }),
     full_name: z.string().min(2, "Full name must be at least 2 characters"),
     password: z

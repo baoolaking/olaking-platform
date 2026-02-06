@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Globe,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { TikTokCoinPopup } from "@/components/common/TikTokCoinPopup";
 
 const otherServices = [
   {
@@ -31,7 +33,7 @@ const otherServices = [
   {
     id: 4,
     title: "Buy TikTok Coins",
-    description: "Affordable TikTok coins for gifting and engagement",
+    description: "200-10,000 coins (₦4k-₦200k). Save 25% with lower service fee",
     icon: Sparkles,
     color: "from-pink-500/20 to-pink-500/10",
     category: "Digital Currency",
@@ -72,7 +74,15 @@ interface OtherServicesViewProps {
 }
 
 export function OtherServicesView({ searchTerm = "" }: OtherServicesViewProps) {
+  const [showTikTokPopup, setShowTikTokPopup] = useState(false);
+
   const handleServiceClick = (service: typeof otherServices[0]) => {
+    // Special handling for TikTok coins
+    if (service.id === 4) {
+      setShowTikTokPopup(true);
+      return;
+    }
+
     const message = encodeURIComponent(
       `Hello! I'm interested in: ${service.title}`
     );
@@ -152,6 +162,13 @@ export function OtherServicesView({ searchTerm = "" }: OtherServicesViewProps) {
           );
         })}
       </motion.div>
+
+      {/* TikTok Coin Package Selection Popup */}
+      <TikTokCoinPopup
+        showOnMount={showTikTokPopup}
+        autoShowDelay={0}
+        onClose={() => setShowTikTokPopup(false)}
+      />
     </div>
   );
 }

@@ -249,7 +249,7 @@ export default function RegisterPage() {
                       onBlur={field.onBlur}
                       error={errors.whatsapp_no?.message}
                       label="WhatsApp Number"
-                      placeholder="09087654322, 7098765412, or +2347098765412"
+                      placeholder="+1234567890, +447123456789, or 09087654322"
                     />
                   )}
                 />

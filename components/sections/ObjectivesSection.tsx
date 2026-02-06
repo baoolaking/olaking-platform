@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -13,6 +14,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { TikTokCoinPopup } from "@/components/common/TikTokCoinPopup";
 
 const objectives = [
   {
@@ -46,7 +48,7 @@ const objectives = [
   {
     id: 4,
     title: "Buy TikTok Coins",
-    description: "Affordable TikTok coins for gifting and engagement",
+    description: "200-10,000 coins (₦4k-₦200k). Save 25% with lower service fee",
     icon: Sparkles,
     color: "from-pink-500/20 to-pink-500/10",
     route: "whatsapp",
@@ -85,9 +87,14 @@ const itemVariants = {
 };
 
 export function ObjectivesSection() {
+  const [showTikTokPopup, setShowTikTokPopup] = useState(false);
+
   const handleObjectiveClick = (objective: (typeof objectives)[0]) => {
     if (objective.isInternal) {
       return;
+    } else if (objective.id === 4) {
+      // Special handling for TikTok coins
+      setShowTikTokPopup(true);
     } else {
       const message = encodeURIComponent(
         `Hello! I'm interested in: ${objective.title}`
@@ -180,6 +187,13 @@ export function ObjectivesSection() {
           );
         })}
       </motion.div>
+
+      {/* TikTok Coin Package Selection Popup */}
+      <TikTokCoinPopup
+        showOnMount={showTikTokPopup}
+        autoShowDelay={0}
+        onClose={() => setShowTikTokPopup(false)}
+      />
     </section>
   );
 }
